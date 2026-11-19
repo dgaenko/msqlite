@@ -224,7 +224,7 @@ type HelpPage struct {
 	root  *tview.Flex
 	head  *tview.TextView
 	text  *tview.TextView
-	hints *tview.TextView
+	hints *hintView
 }
 
 func newHelpPage(a *App) *HelpPage {
@@ -245,10 +245,10 @@ func newHelpPage(a *App) *HelpPage {
 
 	p.setText()
 
-	p.hints = tview.NewTextView().SetDynamicColors(true)
+	p.hints = newHintView()
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход"))
+	p.hints.SetHints("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход")
 
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(p.head, 1, 0, false).
@@ -277,7 +277,7 @@ func (p *HelpPage) relocalize() {
 	p.head.SetText(fmt.Sprintf("[yellow::b]msqlite[-:-:-][white] · %s  [gray::d]v%s", tr("помощь"), esc(p.app.opts.Version)))
 	p.text.SetTitle(tr(" Клавиши и возможности "))
 	p.setText()
-	p.hints.SetText(hintBar("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход"))
+	p.hints.SetHints("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход")
 }
 
 func (p *HelpPage) Root() tview.Primitive { return p.root }
@@ -290,5 +290,5 @@ func (p *HelpPage) restyle() {
 	p.text.SetTitleColor(colTitle)
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход"))
+	p.hints.SetHints("Esc", "Назад", "↑/↓", "Прокрутка", "F10", "Выход")
 }

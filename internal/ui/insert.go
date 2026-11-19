@@ -28,7 +28,7 @@ type InsertPage struct {
 	head   *tview.TextView
 	fields *tview.Flex
 	status *tview.TextView
-	hints  *tview.TextView
+	hints  *hintView
 }
 
 func newInsertPage(a *App, data *DataPage) *InsertPage {
@@ -111,15 +111,15 @@ func (p *InsertPage) build() {
 	p.status.SetTextColor(colStatusFg)
 	p.status.SetWrap(false)
 
-	p.hints = tview.NewTextView().SetDynamicColors(true)
+	p.hints = newHintView()
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"Tab/↑↓", "Поле",
 		"PgUp/PgDn", "Прокрутка",
 		"Ctrl+S", "Вставить",
 		"Esc", "Отмена",
-	))
+	)
 
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(p.head, 1, 0, false).
@@ -161,12 +161,12 @@ func (p *InsertPage) restyle() {
 	p.status.SetTextColor(colStatusFg)
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"Tab/↑↓", "Поле",
 		"PgUp/PgDn", "Прокрутка",
 		"Ctrl+S", "Вставить",
 		"Esc", "Отмена",
-	))
+	)
 }
 
 func (p *InsertPage) updateHead() {

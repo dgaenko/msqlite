@@ -57,7 +57,7 @@ type App struct {
 
 	mainHeader *tview.TextView
 	mainStatus *tview.TextView
-	mainHints  *tview.TextView
+	mainHints  *hintView
 
 	current     *db.Database
 	objects     []db.Object
@@ -191,7 +191,7 @@ func (a *App) build() {
 	a.mainStatus.SetBackgroundColor(colStatusBg)
 	a.mainStatus.SetTextColor(colStatusFg)
 
-	a.mainHints = tview.NewTextView().SetDynamicColors(true)
+	a.mainHints = newHintView()
 	a.mainHints.SetBackgroundColor(colHintBg)
 	a.mainHints.SetTextColor(colHintFg)
 	a.setMainHints()
@@ -546,7 +546,7 @@ func (a *App) computeExactCounts() {
 }
 
 func (a *App) setMainHints() {
-	a.mainHints.SetText(hintBar(
+	a.mainHints.SetHints(
 		"F1", "Справка",
 		"F2", "Файл",
 		"F3", "Структ.",
@@ -557,7 +557,7 @@ func (a *App) setMainHints() {
 		"F10", "Выход",
 		"/", "Фильтр",
 		"Bksp", "Вверх",
-	))
+	)
 }
 
 func (a *App) updateHeader() {

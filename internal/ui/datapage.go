@@ -37,7 +37,7 @@ type DataPage struct {
 	table   *tview.Table
 	status  *tview.TextView
 	preview *tview.TextView
-	hints   *tview.TextView
+	hints   *hintView
 }
 
 func newDataPage(a *App, d *db.Database, obj db.Object, cols []db.Column, size int) *DataPage {
@@ -97,10 +97,10 @@ func (p *DataPage) build() {
 	p.preview.SetTextColor(colDim)
 	p.preview.SetWrap(false)
 
-	p.hints = tview.NewTextView().SetDynamicColors(true)
+	p.hints = newHintView()
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"F2", "Ячейка",
 		"F3", "Структ.",
 		"F5", "Обнов.",
@@ -110,7 +110,7 @@ func (p *DataPage) build() {
 		"Del", "Удал.",
 		"F8", "Режим",
 		"Esc", "Назад",
-	))
+	)
 
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(p.header, 1, 0, false).
@@ -187,7 +187,7 @@ func (p *DataPage) restyle() {
 	p.preview.SetTextColor(colDim)
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"F2", "Ячейка",
 		"F3", "Структ.",
 		"F5", "Обнов.",
@@ -197,7 +197,7 @@ func (p *DataPage) restyle() {
 		"Del", "Удал.",
 		"F8", "Режим",
 		"Esc", "Назад",
-	))
+	)
 	p.populate()
 	p.updateStatus()
 }

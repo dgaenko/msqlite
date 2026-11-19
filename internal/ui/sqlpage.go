@@ -25,7 +25,7 @@ type SQLPage struct {
 	table          *tview.Table
 	status         *tview.TextView
 	input          *tview.TextArea
-	hints          *tview.TextView
+	hints          *hintView
 	historyIdx     int
 	focusGrid      bool
 	result         *db.QueryResult
@@ -101,10 +101,10 @@ func (p *SQLPage) build() {
 		return ev
 	})
 
-	p.hints = tview.NewTextView().SetDynamicColors(true)
+	p.hints = newHintView()
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"Enter", "Выполнить",
 		"Alt+Enter", "Строка",
 		"Tab", "Дополнить",
@@ -113,7 +113,7 @@ func (p *SQLPage) build() {
 		"Ctrl+Space", "Дополнить",
 		"Alt+↑↓", "История",
 		"Esc", "Стоп/Назад",
-	))
+	)
 
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(p.header, 1, 0, false).
@@ -146,7 +146,7 @@ func (p *SQLPage) restyle() {
 	p.input.SetTitleColor(colTitle)
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"Enter", "Выполнить",
 		"Alt+Enter", "Строка",
 		"Tab", "Дополнить",
@@ -155,7 +155,7 @@ func (p *SQLPage) restyle() {
 		"Ctrl+Space", "Дополнить",
 		"Alt+↑↓", "История",
 		"Esc", "Стоп/Назад",
-	))
+	)
 	p.updateMode()
 	p.table.Clear()
 	if p.result != nil && p.result.IsSelect {

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -407,10 +406,6 @@ func styleTextView(v *tview.TextView) {
 	v.SetTextColor(colText)
 }
 
-func keyHint(key, label string) string {
-	return fmt.Sprintf("[%s:%s]%s[-:-:-] %s ", colorName(colKeyFg), colorName(colKeyBg), key, tr(label))
-}
-
 func colorName(c tcell.Color) string {
 	switch c {
 	case tcell.ColorYellow:
@@ -429,14 +424,6 @@ func colorName(c tcell.Color) string {
 		return css
 	}
 	return "default"
-}
-
-func hintBar(pairs ...string) string {
-	var b strings.Builder
-	for i := 0; i+1 < len(pairs); i += 2 {
-		b.WriteString(keyHint(pairs[i], pairs[i+1]))
-	}
-	return b.String()
 }
 
 func esc(s string) string { return tview.Escape(s) }

@@ -22,7 +22,7 @@ type StructurePage struct {
 	root   *tview.Flex
 	head   *tview.TextView
 	text   *tview.TextView
-	hints  *tview.TextView
+	hints  *hintView
 }
 
 func newStructurePage(a *App, d *db.Database, obj db.Object) *StructurePage {
@@ -47,7 +47,7 @@ func (p *StructurePage) build() {
 	p.text.SetTitleColor(colTitle)
 	p.text.SetBorderColor(colBorder)
 
-	p.hints = tview.NewTextView().SetDynamicColors(true)
+	p.hints = newHintView()
 	p.hints.SetBackgroundColor(colHintBg)
 	p.hints.SetTextColor(colHintFg)
 	p.setHints()
@@ -61,14 +61,14 @@ func (p *StructurePage) build() {
 func (p *StructurePage) Root() tview.Primitive { return p.root }
 
 func (p *StructurePage) setHints() {
-	p.hints.SetText(hintBar(
+	p.hints.SetHints(
 		"F2", "Изменить",
 		"Esc", "Назад",
 		"F5", "Обнов.",
 		"F4", "SQL",
 		"F8", "Режим",
 		"F9", "Меню",
-	))
+	)
 }
 
 func (p *StructurePage) restyle() {
