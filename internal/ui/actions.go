@@ -372,12 +372,6 @@ func (tm *topMenu) handleKey(ev *tcell.EventKey) {
 }
 
 func (a *App) menuCategories() []menuCategory {
-	mark := func(active bool) string {
-		if active {
-			return " ✓"
-		}
-		return ""
-	}
 	file := menuCategory{title: tr("Файл"), actions: []paletteAction{
 		{tr("Открыть файл или каталог…"), a.openPathDialog},
 		{tr("Создать базу данных…"), a.createDatabaseDialog},
@@ -461,9 +455,7 @@ func (a *App) menuCategories() []menuCategory {
 	}
 
 	categories = append(categories, menuCategory{title: tr("Интерфейс"), actions: []paletteAction{
-		{tr("Тема: ") + themeLabel(themeMC) + mark(activeTheme == themeMC), func() { a.setTheme(themeMC) }},
-		{tr("Тема: ") + themeLabel(themeDOS) + mark(activeTheme == themeDOS), func() { a.setTheme(themeDOS) }},
-		{tr("Тема: ") + themeLabel(themeDOSBlue) + mark(activeTheme == themeDOSBlue), func() { a.setTheme(themeDOSBlue) }},
+		{trf("Тема: %s…", themeLabel(activeTheme)), a.themeDialog},
 		{trf("Размер страницы: %d…", a.opts.PageSize), a.pageSizeDialog},
 		{trf("Разделители колонок: %s", onOff(a.colLines)), a.toggleColumnLines},
 		{trf("Запоминать последнюю папку: %s", onOff(a.rememberDir)), a.toggleRememberDir},

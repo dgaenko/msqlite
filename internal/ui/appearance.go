@@ -242,3 +242,34 @@ func (a *App) languageDialog() {
 	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
 	a.showListDialog(tr("Язык интерфейса"), 40, list, choose)
 }
+
+// themeDialog lets the user pick the interface theme.
+func (a *App) themeDialog() {
+	themes := []string{themeMC, themeDOS, themeDOSBlue}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	current := 0
+	for i, name := range themes {
+		label := themeLabel(name)
+		if name == activeTheme {
+			label += " ✓"
+			current = i
+		}
+		list.AddItem(label, "", 0, nil)
+	}
+	list.SetCurrentItem(current)
+
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(themes) {
+			return
+		}
+		name := themes[i]
+		a.closeDialog()
+		a.setTheme(name)
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("Тема интерфейса"), 44, list, choose)
+}
