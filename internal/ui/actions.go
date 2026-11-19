@@ -30,7 +30,7 @@ func (a *App) openPalette() {
 	list.SetWrapAround(true)
 	for _, act := range actions {
 		act := act
-		list.AddItem(act.label, "", 0, func() {
+		list.AddItem(" "+act.label+" ", "", 0, func() {
 			a.closeDialog()
 			act.run()
 		})
@@ -243,7 +243,7 @@ func (tm *topMenu) load() {
 	maxLabel := 0
 	for _, act := range cat.actions {
 		act := act
-		tm.list.AddItem(act.label, "", 0, func() {
+		tm.list.AddItem(" "+act.label+" ", "", 0, func() {
 			tm.app.closeDialog()
 			act.run()
 		})

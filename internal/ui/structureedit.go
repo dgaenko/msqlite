@@ -37,7 +37,7 @@ func (p *StructurePage) openEditor() {
 	list.SetWrapAround(true)
 	for _, act := range actions {
 		act := act
-		list.AddItem(act.label, "", 0, func() {
+		list.AddItem(" "+act.label+" ", "", 0, func() {
 			p.app.closeDialog()
 			act.run()
 		})

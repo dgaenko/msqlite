@@ -226,7 +226,7 @@ func (a *App) languageDialog() {
 			label += " ✓"
 			current = i
 		}
-		list.AddItem(label, "", 0, nil)
+		list.AddItem(" "+label+" ", "", 0, nil)
 	}
 	list.SetCurrentItem(current)
 
@@ -257,7 +257,7 @@ func (a *App) themeDialog() {
 			label += " ✓"
 			current = i
 		}
-		list.AddItem(label, "", 0, nil)
+		list.AddItem(" "+label+" ", "", 0, nil)
 	}
 	list.SetCurrentItem(current)
 
