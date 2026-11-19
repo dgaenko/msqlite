@@ -71,10 +71,14 @@ export GIT_AUTHOR_NAME="$PUBLIC_IDENT_NAME"
 export GIT_AUTHOR_EMAIL="$PUBLIC_IDENT_EMAIL"
 export GIT_COMMITTER_NAME="$PUBLIC_IDENT_NAME"
 export GIT_COMMITTER_EMAIL="$PUBLIC_IDENT_EMAIL"
-if [ -n "$PARENT" ]; then
-	COMMIT="$(printf 'msqlite %s\n' "$VERSION" | git commit-tree "$TREE" -p "$PARENT")"
+if [ -n "$PARENT" ] && [ "$(git rev-parse "${PARENT}^{tree}")" = "$TREE" ]; then
+	COMMIT="$PARENT"
 else
-	COMMIT="$(printf 'msqlite %s\n' "$VERSION" | git commit-tree "$TREE")"
+	if [ -n "$PARENT" ]; then
+		COMMIT="$(printf 'msqlite %s\n' "$VERSION" | git commit-tree "$TREE" -p "$PARENT")"
+	else
+		COMMIT="$(printf 'msqlite %s\n' "$VERSION" | git commit-tree "$TREE")"
+	fi
 fi
 git update-ref refs/heads/public "$COMMIT"
 
