@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/rivo/tview"
 )
 
 func (a *App) setTheme(name string) {
@@ -176,6 +178,13 @@ func (a *App) relocalize() {
 		a.table.SetTitle(tr(" Таблицы и представления "))
 	}
 	a.panelFocused(a.focus)
+	if a.current != nil {
+		keep := ""
+		if i := a.selectedObjectIndex(); i >= 0 && i < len(a.visible) {
+			keep = a.visible[i].Name
+		}
+		a.renderTables(a.objects, a.objCounts, keep)
+	}
 	a.setMainHints()
 	a.updateHeader()
 	a.updateMainStatus()
@@ -201,4 +210,35 @@ func (a *App) relocalize() {
 			a.help.relocalize()
 		}
 	}
+}
+
+// languageDialog lets the user pick the interface language.
+func (a *App) languageDialog() {
+	codes := []string{langRU, langEN}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	current := 0
+	for i, code := range codes {
+		label := languageName(code)
+		if code == activeLang {
+			label += " ✓"
+			current = i
+		}
+		list.AddItem(label, "", 0, nil)
+	}
+	list.SetCurrentItem(current)
+
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(codes) {
+			return
+		}
+		code := codes[i]
+		a.closeDialog()
+		a.setLanguage(code)
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("Язык интерфейса"), 40, list, choose)
 }

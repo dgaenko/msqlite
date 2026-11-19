@@ -468,8 +468,7 @@ func (a *App) menuCategories() []menuCategory {
 		{trf("Разделители колонок: %s", onOff(a.colLines)), a.toggleColumnLines},
 		{trf("Запоминать последнюю папку: %s", onOff(a.rememberDir)), a.toggleRememberDir},
 		{trf("Сплэш при запуске: %s", onOff(!a.opts.NoSplash)), a.toggleSplash},
-		{tr("Язык: ") + "Русский" + mark(activeLang == langRU), func() { a.setLanguage(langRU) }},
-		{tr("Язык: ") + "English" + mark(activeLang == langEN), func() { a.setLanguage(langEN) }},
+		{trf("Язык: %s…", languageName(activeLang)), a.languageDialog},
 	}})
 
 	categories = append(categories, menuCategory{title: tr("Справка"), actions: []paletteAction{
