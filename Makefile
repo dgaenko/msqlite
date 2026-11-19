@@ -7,23 +7,29 @@ COMMIT     := $(shell $(VERSION_SH) commit)
 BUILD_DATE := $(shell $(VERSION_SH) date)
 LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)
 
-.PHONY: all build pi pi32 dist publish release ship test vet clean install uninstall version
+.PHONY: all build build-amd64 build-arm64 build-armv7 pi pi32 dist publish release ship test vet clean install uninstall version
 
 all: build
 
-build:
+build: build-amd64 build-arm64
+	./scripts/publish-adeploy.sh
+
+build-amd64:
 	CGO_ENABLED=0 go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(APP) .
 
-pi:
+build-arm64:
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(APP)-linux-arm64 .
 
-pi32:
+build-armv7:
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(APP)-linux-armv7 .
 
-dist: pi pi32 publish
+pi: build-arm64
 
-publish: build pi
-	./scripts/publish-adeploy.sh
+pi32: build-armv7
+
+dist: build build-armv7
+
+publish: build
 
 release: dist
 

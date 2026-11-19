@@ -104,7 +104,7 @@ TARGET="${APP}-linux-${ARCH}"
 case "$ARCH" in
 amd64)
 	SRC="$ROOT/bin/msqlite"
-	MAKE_TARGET="build"
+	MAKE_TARGET="build-amd64"
 	;;
 arm64)
 	SRC="$ROOT/bin/msqlite-linux-arm64"

@@ -25,12 +25,6 @@ if ! git diff --cached --quiet; then
 fi
 git push origin HEAD
 
-make build pi pi32
-
-if [ -x "${ROOT}/scripts/publish-adeploy.sh" ]; then
-	"${ROOT}/scripts/publish-adeploy.sh"
-else
-	echo "ship: scripts/publish-adeploy.sh не найден, выкладка пропущена" >&2
-fi
+make dist
 
 "${ROOT}/scripts/sync-github.sh"

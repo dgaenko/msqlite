@@ -19,9 +19,7 @@ check:
 build:
   stage: build
   script:
-    - make build
-    - make pi
-    - make pi32
+    - make build-amd64 build-arm64 build-armv7
   artifacts:
     paths:
       - bin/

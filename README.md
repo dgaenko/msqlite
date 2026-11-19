@@ -78,15 +78,16 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
 ## Сборка
 
 ```bash
-make build    # локальный бинарник: bin/msqlite
-make pi       # Raspberry Pi / Ubuntu arm64: bin/msqlite-linux-arm64
-make pi32     # 32-битный ARMv7: bin/msqlite-linux-armv7
-make publish  # amd64 + arm64 и публикация обновления
-make dist     # обе ARM-сборки и публикация обновления
+make build       # amd64 + arm64 и публикация обновления
+make build-amd64 # только локальный бинарник: bin/msqlite
+make pi          # Raspberry Pi / Ubuntu arm64: bin/msqlite-linux-arm64
+make pi32        # 32-битный ARMv7: bin/msqlite-linux-armv7
+make dist        # все три сборки и публикация обновления
 ```
 
-`make publish` и `make dist` после сборки обновляют пакет обновления
-(доступ к нему настраивается отдельно).
+`make build`, `make publish` и `make dist` после сборки обновляют пакет
+обновления (доступ к нему настраивается отдельно). В пакет входят только
+amd64 и arm64; armv7 собирается, но не публикуется.
 
 Сборка выполняется с `CGO_ENABLED=0`, бинарники статические.
 
@@ -102,7 +103,7 @@ make dist     # обе ARM-сборки и публикация обновлен
   `X.Y.Z+git.N.gHASH`; незакоммиченные изменения добавляют `.dirty`.
 - Без Git берётся `VERSION` и добавляется `+build.<hash>` — хэш всех `.go`,
   `go.mod` и `go.sum`. Любое изменение исходников меняет версию.
-- Принудительно задать версию: `MSQLITE_VERSION=1.2.3 make build`
+- Принудительно задать версию: `MSQLITE_VERSION=1.2.3 make build-amd64`
   (значение проверяется на соответствие semver).
 
 ```bash
