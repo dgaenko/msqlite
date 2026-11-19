@@ -161,7 +161,6 @@ func (tm *topMenu) build() {
 	tm.list = tview.NewList()
 	styleList(tm.list, colMenuBg, colMenuFg, colMenuFg)
 	tm.list.SetBorder(false)
-	tm.list.SetBorderPadding(0, 0, 1, 1)
 	tm.list.SetMainTextStyle(tcell.StyleDefault.Foreground(colMenuFg).Background(colMenuBg))
 	tm.list.SetSecondaryTextStyle(tcell.StyleDefault.Foreground(colMenuFg).Background(colMenuBg))
 	tm.list.SetSelectedStyle(tcell.StyleDefault.Foreground(colMenuSelFg).Background(colMenuSelBg))
@@ -243,11 +242,12 @@ func (tm *topMenu) load() {
 	maxLabel := 0
 	for _, act := range cat.actions {
 		act := act
-		tm.list.AddItem(" "+act.label+" ", "", 0, func() {
+		label := " " + act.label + " "
+		tm.list.AddItem(label, "", 0, func() {
 			tm.app.closeDialog()
 			act.run()
 		})
-		if w := tview.TaggedStringWidth(act.label); w > maxLabel {
+		if w := tview.TaggedStringWidth(label); w > maxLabel {
 			maxLabel = w
 		}
 	}
