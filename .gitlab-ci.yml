@@ -1,0 +1,28 @@
+image: golang:1.22-bookworm
+
+stages:
+  - check
+  - build
+
+variables:
+  GOTOOLCHAIN: local
+  CGO_ENABLED: "0"
+  GOFLAGS: "-trimpath"
+
+check:
+  stage: check
+  script:
+    - test -z "$(gofmt -l .)"
+    - go vet ./...
+    - go test ./...
+
+build:
+  stage: build
+  script:
+    - make build
+    - make pi
+    - make pi32
+  artifacts:
+    paths:
+      - bin/
+    expire_in: 1 week
