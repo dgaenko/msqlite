@@ -12,7 +12,11 @@ LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.
 all: build
 
 build: build-amd64 build-arm64
-	./scripts/publish-adeploy.sh
+	@if [ -x ./scripts/publish-adeploy.sh ]; then \
+		./scripts/publish-adeploy.sh; \
+	else \
+		echo "publish-adeploy.sh не найден: выкладка обновления пропущена" >&2; \
+	fi
 
 build-amd64:
 	CGO_ENABLED=0 go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(APP) .

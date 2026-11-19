@@ -5,7 +5,7 @@
 #  - бинарники прикладываются к GitHub Release (в git не коммитятся);
 #  - автор/коммиттер публичной истории обезличиваются.
 #
-# Требуется токен: GITHUB_TOKEN или /root/.config/.github.txt.
+# Требуется токен: GITHUB_TOKEN или $HOME/.config/.github.txt.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,11 +23,11 @@ PUBLIC_IDENT_NAME="${PUBLIC_IDENT_NAME:-Гаенко Дмитрий}"
 PUBLIC_IDENT_EMAIL="${PUBLIC_IDENT_EMAIL:-noreply@msqlite.invalid}"
 
 TOKEN="${GITHUB_TOKEN:-}"
-if [ -z "$TOKEN" ] && [ -r /root/.config/.github.txt ]; then
-	TOKEN="$(tr -d '[:space:]' </root/.config/.github.txt)"
+if [ -z "$TOKEN" ] && [ -r "${HOME}/.config/.github.txt" ]; then
+	TOKEN="$(tr -d '[:space:]' <"${HOME}/.config/.github.txt")"
 fi
 [ -n "$TOKEN" ] || {
-	echo "sync-github: нет GITHUB_TOKEN и /root/.config/.github.txt" >&2
+	echo "sync-github: нет GITHUB_TOKEN и $HOME/.config/.github.txt" >&2
 	exit 1
 }
 
