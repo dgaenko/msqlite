@@ -61,7 +61,7 @@ func (a *App) addRecent(path string) {
 func (a *App) openRecentDialog() {
 	paths := loadRecent()
 	if len(paths) == 0 {
-		a.showModal("Список недавних баз пуст.", []string{"OK"}, nil)
+		a.showModal(tr("Список недавних баз пуст."), []string{"OK"}, nil)
 		return
 	}
 	list := tview.NewList()
@@ -85,5 +85,5 @@ func (a *App) openRecentDialog() {
 		a.closeDialog()
 		a.openPath(path)
 	}
-	a.showListDialog("Недавние базы", 70, list, openCurrent)
+	a.showListDialog(tr("Недавние базы"), 70, list, openCurrent)
 }

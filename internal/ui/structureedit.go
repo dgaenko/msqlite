@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -14,11 +13,11 @@ import (
 
 func (p *StructurePage) openEditor() {
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	if p.obj.Type != "table" {
-		p.app.showModal("Редактирование структуры доступно только для таблиц.", []string{"OK"}, nil)
+		p.app.showModal(tr("Редактирование структуры доступно только для таблиц."), []string{"OK"}, nil)
 		return
 	}
 
@@ -26,10 +25,10 @@ func (p *StructurePage) openEditor() {
 		label string
 		run   func()
 	}{
-		{"Переименовать таблицу…", p.renameTableDialog},
-		{"Добавить колонку…", p.addColumnDialog},
-		{"Переименовать колонку…", p.renameColumnDialog},
-		{"Удалить колонку…", p.dropColumnDialog},
+		{tr("Переименовать таблицу…"), p.renameTableDialog},
+		{tr("Добавить колонку…"), p.addColumnDialog},
+		{tr("Переименовать колонку…"), p.renameColumnDialog},
+		{tr("Удалить колонку…"), p.dropColumnDialog},
 	}
 	list := tview.NewList()
 	styleList(list, colDialogBg, colDialogFg, colDialogDim)
@@ -51,12 +50,12 @@ func (p *StructurePage) openEditor() {
 		p.app.closeDialog()
 		actions[index].run()
 	}
-	p.app.showListDialog("Структура · "+p.obj.Name, 64, list, runCurrent)
+	p.app.showListDialog(trf("Структура · %s", p.obj.Name), 64, list, runCurrent)
 }
 
 func (p *StructurePage) alterSchema(oldName, newName, sqlText, message string) {
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -88,17 +87,17 @@ func (p *StructurePage) renameTableDialog() {
 				return
 			}
 			sqlText := "ALTER TABLE " + db.QuoteIdent(oldName) + " RENAME TO " + db.QuoteIdent(newName)
-			p.alterSchema(oldName, newName, sqlText, fmt.Sprintf("Таблица переименована в %q", newName))
+			p.alterSchema(oldName, newName, sqlText, trf("Таблица переименована в %q", newName))
 		})
 }
 
 func (p *StructurePage) addColumnDialog() {
-	nameField := tview.NewInputField().SetLabel("Имя: ").SetLabelWidth(10)
+	nameField := tview.NewInputField().SetLabel(tr("Имя: ")).SetLabelWidth(10)
 	nameField.SetLabelColor(colDialogTitle)
 	nameField.SetFieldBackgroundColor(colFieldBg)
 	nameField.SetFieldTextColor(colText)
 
-	typeDD := tview.NewDropDown().SetLabel("Тип: ").SetLabelWidth(10)
+	typeDD := tview.NewDropDown().SetLabel(tr("Тип: ")).SetLabelWidth(10)
 	typeDD.SetUseStyleTags(false)
 	typeDD.SetOptions(sqlColumnTypes, nil)
 	typeDD.SetCurrentOption(1)
@@ -122,20 +121,20 @@ func (p *StructurePage) addColumnDialog() {
 	defaultField.SetBackgroundColor(colDialogBg)
 	defaultField.SetFieldBackgroundColor(colFieldBg)
 	defaultField.SetFieldTextColor(colText)
-	defaultField.SetPlaceholder("SQL-выражение")
+	defaultField.SetPlaceholder(tr("SQL-выражение"))
 	defaultField.SetPlaceholderStyle(tcell.StyleDefault.Foreground(colDim).Background(colFieldBg).Italic(true))
 
 	hint := tview.NewTextView().SetDynamicColors(true)
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]Для NOT NULL у существующей таблицы обычно нужен DEFAULT")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Для NOT NULL у существующей таблицы обычно нужен DEFAULT"))
 
 	var okBtn, cancelBtn *tview.Button
 	submit := func() {
 		name := strings.TrimSpace(nameField.GetText())
 		if name == "" {
-			hint.SetText("[red]Укажите имя колонки[-:-:-]")
+			hint.SetText("[red]" + tr("Укажите имя колонки") + "[-:-:-]")
 			return
 		}
 		index, typ := typeDD.GetCurrentOption()
@@ -150,7 +149,7 @@ func (p *StructurePage) addColumnDialog() {
 		if def := strings.TrimSpace(defaultField.GetText()); def != "" {
 			sqlText += " DEFAULT " + def
 		}
-		p.alterSchema(p.obj.Name, p.obj.Name, sqlText, fmt.Sprintf("Колонка %q добавлена", name))
+		p.alterSchema(p.obj.Name, p.obj.Name, sqlText, trf("Колонка %q добавлена", name))
 	}
 	okBtn = dialogButton("OK", true, submit)
 	cancelBtn = dialogButton("Отмена", false, p.app.closeDialog)
@@ -219,20 +218,20 @@ func (p *StructurePage) addColumnDialog() {
 		AddItem(nil, 1, 0, false).
 		AddItem(dialogButtonRow(okBtn, cancelBtn), 1, 0, false)
 
-	p.app.showFramedDialog("Добавить колонку", content, 64, 12, nameField)
+	p.app.showFramedDialog(tr("Добавить колонку"), content, 64, 12, nameField)
 	p.app.dialogEscape = func() bool { return typeDD.IsOpen() }
 }
 
 func (p *StructurePage) renameColumnDialog() {
 	if len(p.cols) == 0 {
-		p.app.showModal("В таблице нет колонок.", []string{"OK"}, nil)
+		p.app.showModal(tr("В таблице нет колонок."), []string{"OK"}, nil)
 		return
 	}
 	names := make([]string, len(p.cols))
 	for i, c := range p.cols {
 		names[i] = c.Name
 	}
-	columnDD := tview.NewDropDown().SetLabel("Колонка: ").SetLabelWidth(10)
+	columnDD := tview.NewDropDown().SetLabel(tr("Колонка: ")).SetLabelWidth(10)
 	columnDD.SetUseStyleTags(false)
 	columnDD.SetOptions(names, nil)
 	columnDD.SetCurrentOption(0)
@@ -245,7 +244,7 @@ func (p *StructurePage) renameColumnDialog() {
 		tcell.StyleDefault.Foreground(colSelFg).Background(colSelBg).Bold(true),
 	)
 
-	nameField := tview.NewInputField().SetLabel("Новое имя: ").SetLabelWidth(12)
+	nameField := tview.NewInputField().SetLabel(tr("Новое имя: ")).SetLabelWidth(12)
 	nameField.SetLabelColor(colDialogTitle)
 	nameField.SetBackgroundColor(colDialogBg)
 	nameField.SetFieldBackgroundColor(colFieldBg)
@@ -255,24 +254,24 @@ func (p *StructurePage) renameColumnDialog() {
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]Enter — переименовать · Esc — отмена")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Enter — переименовать · Esc — отмена"))
 
 	var okBtn, cancelBtn *tview.Button
 	submit := func() {
 		index, _ := columnDD.GetCurrentOption()
 		newName := strings.TrimSpace(nameField.GetText())
 		if index < 0 || index >= len(p.cols) {
-			hint.SetText("[red]Выберите колонку[-:-:-]")
+			hint.SetText("[red]" + tr("Выберите колонку") + "[-:-:-]")
 			return
 		}
 		oldName := p.cols[index].Name
 		if newName == "" || newName == oldName {
-			hint.SetText("[red]Укажите новое имя колонки[-:-:-]")
+			hint.SetText("[red]" + tr("Укажите новое имя колонки") + "[-:-:-]")
 			return
 		}
 		sqlText := "ALTER TABLE " + db.QuoteIdent(p.obj.Name) + " RENAME COLUMN " +
 			db.QuoteIdent(oldName) + " TO " + db.QuoteIdent(newName)
-		p.alterSchema(p.obj.Name, p.obj.Name, sqlText, fmt.Sprintf("Колонка %q переименована", oldName))
+		p.alterSchema(p.obj.Name, p.obj.Name, sqlText, trf("Колонка %q переименована", oldName))
 	}
 	okBtn = dialogButton("OK", true, submit)
 	cancelBtn = dialogButton("Отмена", false, p.app.closeDialog)
@@ -320,20 +319,20 @@ func (p *StructurePage) renameColumnDialog() {
 		AddItem(nil, 1, 0, false).
 		AddItem(dialogButtonRow(okBtn, cancelBtn), 1, 0, false)
 
-	p.app.showFramedDialog("Переименовать колонку", content, 60, 10, columnDD)
+	p.app.showFramedDialog(tr("Переименовать колонку"), content, 60, 10, columnDD)
 	p.app.dialogEscape = func() bool { return columnDD.IsOpen() }
 }
 
 func (p *StructurePage) dropColumnDialog() {
 	if len(p.cols) == 0 {
-		p.app.showModal("В таблице нет колонок.", []string{"OK"}, nil)
+		p.app.showModal(tr("В таблице нет колонок."), []string{"OK"}, nil)
 		return
 	}
 	names := make([]string, len(p.cols))
 	for i, c := range p.cols {
 		names[i] = c.Name
 	}
-	columnDD := tview.NewDropDown().SetLabel("Колонка: ").SetLabelWidth(10)
+	columnDD := tview.NewDropDown().SetLabel(tr("Колонка: ")).SetLabelWidth(10)
 	columnDD.SetUseStyleTags(false)
 	columnDD.SetOptions(names, nil)
 	columnDD.SetCurrentOption(0)
@@ -350,23 +349,23 @@ func (p *StructurePage) dropColumnDialog() {
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]Данные выбранной колонки будут удалены")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Данные выбранной колонки будут удалены"))
 
 	var okBtn, cancelBtn *tview.Button
 	submit := func() {
 		index, _ := columnDD.GetCurrentOption()
 		if index < 0 || index >= len(p.cols) {
-			hint.SetText("[red]Выберите колонку[-:-:-]")
+			hint.SetText("[red]" + tr("Выберите колонку") + "[-:-:-]")
 			return
 		}
 		name := p.cols[index].Name
 		p.app.closeDialog()
-		p.app.showModal(fmt.Sprintf("Удалить колонку %q?", name), []string{"Удалить"}, func(label string) {
+		p.app.showModal(trf("Удалить колонку %q?", name), []string{"Удалить"}, func(label string) {
 			if label != "Удалить" {
 				return
 			}
 			sqlText := "ALTER TABLE " + db.QuoteIdent(p.obj.Name) + " DROP COLUMN " + db.QuoteIdent(name)
-			p.alterSchema(p.obj.Name, p.obj.Name, sqlText, fmt.Sprintf("Колонка %q удалена", name))
+			p.alterSchema(p.obj.Name, p.obj.Name, sqlText, trf("Колонка %q удалена", name))
 		})
 	}
 	okBtn = dialogButton("OK", true, submit)
@@ -404,6 +403,6 @@ func (p *StructurePage) dropColumnDialog() {
 		AddItem(nil, 1, 0, false).
 		AddItem(dialogButtonRow(okBtn, cancelBtn), 1, 0, false)
 
-	p.app.showFramedDialog("Удалить колонку", content, 60, 9, columnDD)
+	p.app.showFramedDialog(tr("Удалить колонку"), content, 60, 9, columnDD)
 	p.app.dialogEscape = func() bool { return columnDD.IsOpen() }
 }

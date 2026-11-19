@@ -43,7 +43,7 @@ func (p *StructurePage) build() {
 	p.text.SetScrollable(true)
 	p.text.SetWrap(false)
 	p.text.SetBorder(true)
-	p.text.SetTitle(" Структура ")
+	p.text.SetTitle(tr(" Структура "))
 	p.text.SetTitleColor(colTitle)
 	p.text.SetBorderColor(colBorder)
 
@@ -83,11 +83,11 @@ func (p *StructurePage) restyle() {
 }
 
 func (p *StructurePage) updateHead() {
-	mode := "только чтение"
+	mode := tr("только чтение")
 	if !p.app.opts.ReadOnly {
-		mode = "правка"
+		mode = tr("правка")
 	}
-	head := fmt.Sprintf("[yellow::b]%s[-:-:-] [white]· %s  [silver]· структура · %s",
+	head := trf("[yellow::b]%s[-:-:-] [white]· %s  [silver]· структура · %s",
 		esc(p.obj.Name), typeLabel(p.obj.Type), mode)
 	if p.notice != "" {
 		head += "  [green::b]" + esc(p.notice) + "[-:-:-]"
@@ -127,15 +127,15 @@ func (p *StructurePage) Load() error {
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "[yellow::b]%s[-:-:-]  [silver]%s[-:-:-]   строк: [white]%s\n\n",
+	fmt.Fprintf(&b, tr("[yellow::b]%s[-:-:-]  [silver]%s[-:-:-]   строк: [white]%s\n\n"),
 		esc(p.obj.Name), typeLabel(p.obj.Type), rowCount)
 
-	b.WriteString("[yellow::b]Колонки[-:-:-]\n")
+	b.WriteString("[yellow::b]" + tr("Колонки") + "[-:-:-]\n")
 	if len(cols) == 0 {
-		b.WriteString("[silver]  (нет колонок)[-:-:-]\n")
+		b.WriteString("[silver]  " + tr("(нет колонок)") + "[-:-:-]\n")
 	} else {
 		fmt.Fprintf(&b, "[silver] %-4s %-30s %-20s %-9s %-20s %s[-:-:-]\n",
-			"#", "Имя", "Тип", "NOT NULL", "DEFAULT", "PK")
+			"#", tr("Имя"), tr("Тип"), "NOT NULL", "DEFAULT", "PK")
 		for _, c := range cols {
 			typ := c.Type
 			if typ == "" {
@@ -146,7 +146,7 @@ func (p *StructurePage) Load() error {
 			}
 			nn := "—"
 			if c.NotNull {
-				nn = "да"
+				nn = tr("да")
 			}
 			def := "—"
 			if c.HasDef {
@@ -166,9 +166,9 @@ func (p *StructurePage) Load() error {
 		}
 	}
 
-	b.WriteString("\n[yellow::b]Индексы[-:-:-]\n")
+	b.WriteString("\n[yellow::b]" + tr("Индексы") + "[-:-:-]\n")
 	if len(indexes) == 0 {
-		b.WriteString("[silver]  (нет)[-:-:-]\n")
+		b.WriteString("[silver]  " + tr("(нет)") + "[-:-:-]\n")
 	} else {
 		for _, idx := range indexes {
 			flags := []string{}
@@ -197,9 +197,9 @@ func (p *StructurePage) Load() error {
 		}
 	}
 
-	b.WriteString("\n[yellow::b]Внешние ключи[-:-:-]\n")
+	b.WriteString("\n[yellow::b]" + tr("Внешние ключи") + "[-:-:-]\n")
 	if len(fks) == 0 {
-		b.WriteString("[silver]  (нет)[-:-:-]\n")
+		b.WriteString("[silver]  " + tr("(нет)") + "[-:-:-]\n")
 	} else {
 		for _, fk := range fks {
 			to := fk.Table
@@ -211,9 +211,9 @@ func (p *StructurePage) Load() error {
 		}
 	}
 
-	b.WriteString("\n[yellow::b]Триггеры[-:-:-]\n")
+	b.WriteString("\n[yellow::b]" + tr("Триггеры") + "[-:-:-]\n")
 	if len(triggers) == 0 {
-		b.WriteString("[silver]  (нет)[-:-:-]\n")
+		b.WriteString("[silver]  " + tr("(нет)") + "[-:-:-]\n")
 	} else {
 		for _, tr := range triggers {
 			fmt.Fprintf(&b, "  [white]%s[-:-:-]\n", esc(tr.Name))
@@ -226,4 +226,11 @@ func (p *StructurePage) Load() error {
 	p.text.SetText(b.String())
 	p.text.ScrollToBeginning()
 	return nil
+}
+
+func (p *StructurePage) relocalize() {
+	p.text.SetTitle(tr(" Структура "))
+	p.setHints()
+	p.updateHead()
+	_ = p.Load()
 }

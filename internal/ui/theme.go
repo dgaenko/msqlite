@@ -408,7 +408,7 @@ func styleTextView(v *tview.TextView) {
 }
 
 func keyHint(key, label string) string {
-	return fmt.Sprintf("[%s:%s]%s[-:-:-] %s ", colorName(colKeyFg), colorName(colKeyBg), key, label)
+	return fmt.Sprintf("[%s:%s]%s[-:-:-] %s ", colorName(colKeyFg), colorName(colKeyBg), key, tr(label))
 }
 
 func colorName(c tcell.Color) string {
@@ -470,14 +470,14 @@ func truncate(s string, limit int) string {
 
 func onOff(v bool) string {
 	if v {
-		return "вкл"
+		return tr("вкл")
 	}
-	return "выкл"
+	return tr("выкл")
 }
 
 func typeLabel(t string) string {
 	if t == "view" {
-		return "представление"
+		return tr("представление")
 	}
-	return "таблица"
+	return tr("таблица")
 }

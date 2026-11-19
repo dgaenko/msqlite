@@ -31,16 +31,16 @@ func (a *App) buildSplash() tview.Primitive {
 	}
 	text := fmt.Sprintf(
 		"\n\n[%s::b]%s[-:-:-]\n\n"+
-			"[%s::b]SQLite manager для терминала[-:-:-]\n"+
-			"[%s]в стиле Midnight Commander / Far Manager / DOS Navigator[-:-:-]\n\n"+
+			"[%s::b]"+tr("SQLite manager для терминала")+"[-:-:-]\n"+
+			"[%s]"+tr("в стиле Midnight Commander / Far Manager / DOS Navigator")+"[-:-:-]\n\n"+
 			"%s\n%s\n%s\n\n"+
-			"[%s]Нажмите любую клавишу…   ·   v%s[-:-:-]",
+			"[%s]"+tr("Нажмите любую клавишу…   ·   v%s")+"[-:-:-]",
 		colorName(art), splashArt,
 		colorName(fg),
 		colorName(dim),
-		credit("Автор идеи", "Павел Гусаров"),
-		credit("Создатель", "Дмитрий Гаенко"),
-		credit("Разработчик", "DeepSeek"),
+		credit(tr("Автор идеи"), "Павел Гусаров"),
+		credit(tr("Создатель"), "Дмитрий Гаенко"),
+		credit(tr("Разработчик"), "DeepSeek"),
 		colorName(dim), esc(a.opts.Version))
 
 	v := tview.NewTextView().SetDynamicColors(true)

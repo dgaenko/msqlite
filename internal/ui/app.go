@@ -100,6 +100,7 @@ type App struct {
 // Run starts the TUI. It blocks until the application exits.
 func Run(opts Options) error {
 	settings := loadSettings()
+	setActiveLang(settings.Language)
 	if !setActiveTheme(settings.Theme) {
 		setActiveTheme(defaultTheme)
 	}
@@ -129,13 +130,13 @@ func Run(opts Options) error {
 		return err
 	}
 	if info, err := os.Stat(dir); err != nil {
-		return fmt.Errorf("каталог %s: %w", dir, err)
+		return fmt.Errorf(tr("каталог %s: %w"), dir, err)
 	} else if !info.IsDir() {
-		return fmt.Errorf("%s: не каталог", dir)
+		return fmt.Errorf(tr("%s: не каталог"), dir)
 	}
 
 	if opts.OpenPath != "" && !db.IsSQLiteFile(opts.OpenPath) {
-		return fmt.Errorf("%s: не является файлом SQLite", opts.OpenPath)
+		return fmt.Errorf(tr("%s: не является файлом SQLite"), opts.OpenPath)
 	}
 	a := &App{opts: opts, dir: dir, colLines: true, rememberDir: rememberDir, sqlHistory: settings.SQLHistory}
 	if len(a.sqlHistory) > 200 {
@@ -197,7 +198,7 @@ func (a *App) build() {
 
 	a.dbList = tview.NewList()
 	styleList(a.dbList, colPanelBg, colText, colDim)
-	a.dbList.SetTitle(" Базы и папки ")
+	a.dbList.SetTitle(tr(" Базы и папки "))
 	a.dbList.SetFocusFunc(func() { a.panelFocused(0) })
 	a.dbList.SetChangedFunc(func(index int, _, _ string, _ rune) {
 		if a.busy {
@@ -230,7 +231,7 @@ func (a *App) build() {
 
 	a.table = tview.NewTable()
 	styleObjectTable(a.table)
-	a.table.SetTitle(" Таблицы и представления ")
+	a.table.SetTitle(tr(" Таблицы и представления "))
 	a.table.SetFocusFunc(func() { a.panelFocused(1) })
 	a.table.SetSelectionChangedFunc(func(_, _ int) {
 		if !a.busy {
@@ -273,11 +274,12 @@ func (a *App) setPanelTitle(p interface {
 	SetTitle(string) *tview.Box
 	SetTitleColor(tcell.Color) *tview.Box
 }, title string, active bool) {
+	label := tr(" " + title + " ")
 	if active {
-		p.SetTitle(" ▶ " + title + " ")
+		p.SetTitle(" ▶" + label)
 		p.SetTitleColor(colPanelTitle)
 	} else {
-		p.SetTitle("   " + title + " ")
+		p.SetTitle("  " + label)
 		p.SetTitleColor(colDim)
 	}
 }
@@ -303,7 +305,7 @@ func (a *App) reloadFiles(selectPath string, force bool) error {
 		a.dbList.AddItem(e.label(), "", 0, nil)
 	}
 	if len(entries) == 0 {
-		a.dbList.AddItem("(пустая папка)", "", 0, nil)
+		a.dbList.AddItem(tr("(пустая папка)"), "", 0, nil)
 	}
 	idx := -1
 	for i, e := range entries {
@@ -328,7 +330,7 @@ func (a *App) reloadFiles(selectPath string, force bool) error {
 
 	if len(entries) == 0 {
 		a.closeDatabase()
-		a.clearTables("(нет базы данных)")
+		a.clearTables(tr("(нет базы данных)"))
 		a.updateHeader()
 		a.updateMainStatus()
 		return nil
@@ -368,8 +370,8 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 	d, err := db.Open(e.path, a.opts.ReadOnly)
 	if err != nil {
 		a.closeDatabase()
-		a.clearTables("(ошибка открытия)")
-		a.setMainStatus("Ошибка: " + err.Error())
+		a.clearTables(tr("(ошибка открытия)"))
+		a.setMainStatus(tr("Ошибка: ") + translateText(err.Error()))
 		a.updateHeader()
 		if showErr {
 			a.showError(err)
@@ -382,8 +384,8 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 	if err != nil {
 		d.Close()
 		a.closeDatabase()
-		a.clearTables("(ошибка открытия)")
-		a.setMainStatus("Ошибка: " + err.Error())
+		a.clearTables(tr("(ошибка открытия)"))
+		a.setMainStatus(tr("Ошибка: ") + translateText(err.Error()))
 		a.updateHeader()
 		if showErr {
 			a.showError(err)
@@ -413,20 +415,20 @@ func (a *App) renderTables(objs []db.Object, counts map[string]rowCount, keep st
 	a.busy = true
 	a.table.Clear()
 	if len(objs) == 0 {
-		msg := "(нет таблиц)"
+		msg := tr("(нет таблиц)")
 		if a.objFilter != "" {
-			msg = "(нет совпадений)"
+			msg = tr("(нет совпадений)")
 		}
 		a.table.SetCell(0, 0, tview.NewTableCell(msg).
 			SetTextColor(colDim).
 			SetSelectable(false))
 	} else {
-		a.table.SetCell(0, 0, tview.NewTableCell("Имя").
+		a.table.SetCell(0, 0, tview.NewTableCell(tr("Имя")).
 			SetTextColor(colTitle).
 			SetAttributes(tcell.AttrBold).
 			SetSelectable(false).
 			SetExpansion(1))
-		a.table.SetCell(0, 1, tview.NewTableCell("Записей").
+		a.table.SetCell(0, 1, tview.NewTableCell(tr("Записей")).
 			SetTextColor(colTitle).
 			SetAttributes(tcell.AttrBold).
 			SetSelectable(false).
@@ -491,9 +493,9 @@ func (a *App) openObjectFilter() {
 			a.renderTables(a.objects, a.objCounts, keep)
 			a.app.SetFocus(a.table)
 			if a.objFilter == "" {
-				a.notify("Фильтр объектов сброшен")
+				a.notify(tr("Фильтр объектов сброшен"))
 			} else {
-				a.notify("Фильтр объектов: " + a.objFilter)
+				a.notify(tr("Фильтр объектов: ") + a.objFilter)
 			}
 		})
 }
@@ -540,7 +542,7 @@ func (a *App) computeExactCounts() {
 	}
 	a.objCounts = counts
 	a.renderTables(a.objects, counts, keep)
-	a.notify("Счётчики строк пересчитаны")
+	a.notify(tr("Счётчики строк пересчитаны"))
 }
 
 func (a *App) setMainHints() {
@@ -559,9 +561,9 @@ func (a *App) setMainHints() {
 }
 
 func (a *App) updateHeader() {
-	mode := "только чтение"
+	mode := tr("только чтение")
 	if !a.opts.ReadOnly {
-		mode = "чтение/запись"
+		mode = tr("чтение/запись")
 	}
 	line := fmt.Sprintf("[yellow::b] msqlite [-:-:-][white]SQLite manager   [silver]%s[-:-:-]  [gray::d]· %s", esc(a.dir), mode)
 	if a.current != nil {
@@ -585,14 +587,14 @@ func (a *App) updateMainStatus() {
 					dbs++
 				}
 			}
-			a.setMainStatus(fmt.Sprintf("Каталог: %s · папок: %d · баз: %d · Enter — войти, Bksp — вверх",
+			a.setMainStatus(trf("Каталог: %s · папок: %d · баз: %d · Enter — войти, Bksp — вверх",
 				a.dir, dirs, dbs))
 			return
 		}
 		if len(a.entries) == 0 {
-			a.setMainStatus("В каталоге нет баз данных и подпапок. F2 — открыть путь, F5 — обновить.")
+			a.setMainStatus(tr("В каталоге нет баз данных и подпапок. F2 — открыть путь, F5 — обновить."))
 		} else {
-			a.setMainStatus("Выберите базу данных. Enter — открыть, F2 — путь, Bksp — вверх.")
+			a.setMainStatus(tr("Выберите базу данных. Enter — открыть, F2 — путь, Bksp — вверх."))
 		}
 		return
 	}
@@ -608,21 +610,21 @@ func (a *App) updateMainStatus() {
 	if info, err := os.Stat(a.current.Path); err == nil {
 		size = info.Size()
 	}
-	msg := fmt.Sprintf("%s · %s · таблиц: %d · представлений: %d",
+	msg := trf("%s · %s · таблиц: %d · представлений: %d",
 		a.current.Name, db.FormatBytes(size), tables, views)
 	if a.focus == 1 {
 		if i := a.selectedObjectIndex(); i >= 0 {
-			msg += fmt.Sprintf(" · выбрано: %s (%s)", a.visible[i].Name, typeLabel(a.visible[i].Type))
+			msg += trf(" · выбрано: %s (%s)", a.visible[i].Name, typeLabel(a.visible[i].Type))
 		}
 	}
 	if a.objFilter != "" {
-		msg += " · фильтр: " + a.objFilter
+		msg += tr(" · фильтр: ") + a.objFilter
 	}
 	a.setMainStatus(msg)
 }
 
 func (a *App) setMainStatus(s string) {
-	a.mainStatus.SetText(esc(s))
+	a.mainStatus.SetText(esc(translateText(s)))
 }
 
 func (a *App) onKey(ev *tcell.EventKey) *tcell.EventKey {
@@ -843,7 +845,7 @@ func (a *App) f3() {
 
 func (a *App) f4() {
 	if a.current == nil {
-		a.showModal("Сначала выберите базу данных.", []string{"OK"}, nil)
+		a.showModal(tr("Сначала выберите базу данных."), []string{"OK"}, nil)
 		return
 	}
 	a.openSQL()
@@ -856,14 +858,14 @@ func (a *App) f5() {
 			a.showError(err)
 			return
 		}
-		a.notify("Список обновлён")
+		a.notify(tr("Список обновлён"))
 	case pageData:
 		if a.data != nil {
 			if err := a.data.Load(); err != nil {
 				a.showError(err)
 				return
 			}
-			a.notify("Данные обновлены")
+			a.notify(tr("Данные обновлены"))
 		}
 	case pageStructure:
 		if a.structure != nil {
@@ -871,7 +873,7 @@ func (a *App) f5() {
 				a.showError(err)
 				return
 			}
-			a.notify("Структура обновлена")
+			a.notify(tr("Структура обновлена"))
 		}
 	}
 }
@@ -907,7 +909,7 @@ func (a *App) toggleWriteMode() {
 
 	d, err := db.Open(path, newReadOnly)
 	if err != nil {
-		a.showError(fmt.Errorf("не удалось переключить режим: %w", err))
+		a.showError(fmt.Errorf(tr("не удалось переключить режим: %w"), err))
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -915,7 +917,7 @@ func (a *App) toggleWriteMode() {
 	objs, err := d.Objects(ctx)
 	if err != nil {
 		d.Close()
-		a.showError(fmt.Errorf("не удалось переключить режим: %w", err))
+		a.showError(fmt.Errorf(tr("не удалось переключить режим: %w"), err))
 		return
 	}
 

@@ -54,17 +54,19 @@ func modalTitle(text string, buttons []string) string {
 
 func (a *App) showModal(text string, buttons []string, done func(label string)) {
 	buttons = ensureCancelButton(buttons)
-	title := modalTitle(text, buttons)
+	rawTitle := modalTitle(text, buttons)
+	title := tr(rawTitle)
+	text = translateText(text)
 
 	msg := tview.NewTextView().SetDynamicColors(true)
 	msg.SetBackgroundColor(colDialogBg)
 	msg.SetTextColor(colDialogFg)
 	msg.SetWrap(true)
 	msg.SetScrollable(true)
-	if title == "Подтверждение" {
+	if rawTitle == "Подтверждение" {
 		msg.SetTextAlign(tview.AlignCenter)
 	}
-	msg.SetText(esc(text) + "\n\n[" + colorName(colDialogDim) + "]Enter — подтвердить · Esc — отмена[-:-:-]")
+	msg.SetText(esc(text) + "\n\n[" + colorName(colDialogDim) + "]" + tr("Enter — подтвердить · Esc — отмена") + "[-:-:-]")
 
 	actions := make([]func(), len(buttons))
 	for i, label := range buttons {
@@ -126,7 +128,7 @@ func (a *App) showModal(text string, buttons []string, done func(label string)) 
 	if maxWidth := screenWidth - 4; width > maxWidth {
 		width = maxWidth
 	}
-	wrapped := tview.WordWrap(text+"\n\nEnter — подтвердить · Esc — отмена", width-4)
+	wrapped := tview.WordWrap(text+"\n\n"+tr("Enter — подтвердить · Esc — отмена"), width-4)
 	height := len(wrapped) + 6
 	if height < 8 {
 		height = 8
@@ -151,7 +153,7 @@ func dialogButton(label string, primary bool, action func()) *tview.Button {
 	if primary {
 		bg, fg, selFg = colOKBg, colOKFg, colOKSelFg
 	}
-	b := tview.NewButton(label).SetSelectedFunc(action)
+	b := tview.NewButton(tr(label)).SetSelectedFunc(action)
 	b.SetStyle(tcell.StyleDefault.Foreground(fg).Background(bg))
 	b.SetActivatedStyle(tcell.StyleDefault.Foreground(selFg).Background(bg).Bold(true))
 	b.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
@@ -181,6 +183,7 @@ func dialogButtonRow(buttons ...*tview.Button) *tview.Flex {
 }
 
 func (a *App) showListDialog(title string, width int, list *tview.List, ok func()) {
+	title = translateText(title)
 	okBtn := dialogButton("OK", true, ok)
 	cancelBtn := dialogButton("Отмена", false, a.closeDialog)
 	list.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
@@ -225,6 +228,7 @@ func (a *App) showListDialog(title string, width int, list *tview.List, ok func(
 }
 
 func (a *App) showFramedDialog(title string, content tview.Primitive, width, height int, focus tview.Primitive) {
+	title = translateText(title)
 	maxWidth, maxHeight := 80, 24
 	if a.screen != nil {
 		if w, h := a.screen.Size(); w > 0 && h > 0 {
@@ -287,7 +291,7 @@ func (a *App) showError(err error) {
 	if err == nil {
 		return
 	}
-	a.showModal("Ошибка:\n\n"+err.Error(), []string{"OK"}, nil)
+	a.showModal(tr("Ошибка")+":\n\n"+translateText(err.Error()), []string{"OK"}, nil)
 }
 
 func (a *App) confirmQuit() {
@@ -299,6 +303,9 @@ func (a *App) confirmQuit() {
 }
 
 func (a *App) inputDialog(title, label, initial, hint string, accept func(string)) {
+	title = translateText(title)
+	label = translateText(label)
+	hint = translateText(hint)
 	field := tview.NewInputField().
 		SetLabel(label).
 		SetText(initial)
@@ -392,7 +399,7 @@ func (a *App) createDatabase(value string) {
 		return
 	}
 	a.openPath(path)
-	a.notify("База создана: " + path)
+	a.notify(tr("База создана: ") + path)
 }
 
 func (a *App) openPathDialog() {

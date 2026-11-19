@@ -296,7 +296,7 @@ func (tm *topMenu) drawBar() {
 			b.WriteString(normal + " " + cat.title + " ")
 		}
 	}
-	b.WriteString(normal + "  ←/→ раздел · ↑/↓ пункт · Enter · Esc ")
+	b.WriteString(normal + tr("  ←/→ раздел · ↑/↓ пункт · Enter · Esc "))
 	tm.bar.SetText(b.String())
 }
 
@@ -372,99 +372,109 @@ func (tm *topMenu) handleKey(ev *tcell.EventKey) {
 }
 
 func (a *App) menuCategories() []menuCategory {
-	file := menuCategory{title: "Файл", actions: []paletteAction{
-		{"Открыть файл или каталог…", a.openPathDialog},
-		{"Создать базу данных…", a.createDatabaseDialog},
-		{"Недавние базы…", a.openRecentDialog},
-		{"Выход…", a.confirmQuit},
+	mark := func(active bool) string {
+		if active {
+			return " ✓"
+		}
+		return ""
+	}
+	file := menuCategory{title: tr("Файл"), actions: []paletteAction{
+		{tr("Открыть файл или каталог…"), a.openPathDialog},
+		{tr("Создать базу данных…"), a.createDatabaseDialog},
+		{tr("Недавние базы…"), a.openRecentDialog},
+		{tr("Выход…"), a.confirmQuit},
 	}}
 	categories := []menuCategory{file}
 
 	if a.current != nil {
-		mode := "только чтение"
+		mode := tr("только чтение")
 		if !a.opts.ReadOnly {
-			mode = "чтение/запись"
+			mode = tr("чтение/запись")
 		}
-		categories = append(categories, menuCategory{title: "База", actions: []paletteAction{
-			{"Режим: переключить (" + mode + ")", a.toggleWriteMode},
-			{"Резервная копия базы…", a.backupDialog},
-			{"Экспорт SQL-дампа…", a.dumpDialog},
+		categories = append(categories, menuCategory{title: tr("База"), actions: []paletteAction{
+			{trf("Режим: переключить (%s)", mode), a.toggleWriteMode},
+			{tr("Резервная копия базы…"), a.backupDialog},
+			{tr("Экспорт SQL-дампа…"), a.dumpDialog},
 			{"VACUUM", func() { a.runMaintenance("VACUUM", "VACUUM", true) }},
 			{"ANALYZE", func() { a.runMaintenance("ANALYZE", "ANALYZE", true) }},
-			{"Проверка целостности", func() { a.runMaintenance("PRAGMA integrity_check", "Проверка целостности", false) }},
-			{"Посчитать строки точно", a.computeExactCounts},
-			{"Создать таблицу…", a.createTableDialog},
-			{"Создать представление…", a.createViewDialog},
+			{tr("Проверка целостности"), func() {
+				a.runMaintenance("PRAGMA integrity_check", tr("Проверка целостности"), false)
+			}},
+			{tr("Посчитать строки точно"), a.computeExactCounts},
+			{tr("Создать таблицу…"), a.createTableDialog},
+			{tr("Создать представление…"), a.createViewDialog},
 		}})
 	}
 
 	if a.data != nil && a.currentPage == pageData {
 		actions := []paletteAction{
-			{"Экспорт таблицы в CSV…", func() { a.exportTable("csv") }},
-			{"Экспорт таблицы в JSON…", func() { a.exportTable("json") }},
-			{"Экспорт страницы в CSV…", func() { a.exportPage("csv") }},
-			{"Экспорт страницы в JSON…", func() { a.exportPage("json") }},
-			{"Экспорт строки в CSV…", func() { a.exportSelectedRow("csv") }},
-			{"Экспорт строки в JSON…", func() { a.exportSelectedRow("json") }},
-			{"Копировать ячейку", a.copySelectedCell},
-			{"Копировать строку", a.copySelectedRow},
-			{"Показать BLOB (hex)", a.showSelectedBlob},
-			{"Сохранить BLOB в файл…", a.saveSelectedBlob},
-			{"Структура таблицы", func() { a.openStructure(a.data.obj) }},
+			{tr("Экспорт таблицы в CSV…"), func() { a.exportTable("csv") }},
+			{tr("Экспорт таблицы в JSON…"), func() { a.exportTable("json") }},
+			{tr("Экспорт страницы в CSV…"), func() { a.exportPage("csv") }},
+			{tr("Экспорт страницы в JSON…"), func() { a.exportPage("json") }},
+			{tr("Экспорт строки в CSV…"), func() { a.exportSelectedRow("csv") }},
+			{tr("Экспорт строки в JSON…"), func() { a.exportSelectedRow("json") }},
+			{tr("Копировать ячейку"), a.copySelectedCell},
+			{tr("Копировать строку"), a.copySelectedRow},
+			{tr("Показать BLOB (hex)"), a.showSelectedBlob},
+			{tr("Сохранить BLOB в файл…"), a.saveSelectedBlob},
+			{tr("Структура таблицы"), func() { a.openStructure(a.data.obj) }},
 		}
 		if a.data.canEdit {
 			actions = append(actions,
-				paletteAction{"Импорт CSV в таблицу…", a.importCSVDialog},
-				paletteAction{"Импорт JSON в таблицу…", a.importJSONDialog},
-				paletteAction{"Дублировать строку", a.data.duplicateSelectedRow},
-				paletteAction{"Создать индекс…", a.createIndexDialog},
-				paletteAction{"Удалить индекс…", a.dropIndexDialog},
-				paletteAction{"Создать индекс (шаблон SQL)", a.createIndexTemplate},
-				paletteAction{"Очистить таблицу…", func() { a.clearTable(false) }},
-				paletteAction{"Удалить таблицу…", func() { a.clearTable(true) }},
+				paletteAction{tr("Импорт CSV в таблицу…"), a.importCSVDialog},
+				paletteAction{tr("Импорт JSON в таблицу…"), a.importJSONDialog},
+				paletteAction{tr("Дублировать строку"), a.data.duplicateSelectedRow},
+				paletteAction{tr("Создать индекс…"), a.createIndexDialog},
+				paletteAction{tr("Удалить индекс…"), a.dropIndexDialog},
+				paletteAction{tr("Создать индекс (шаблон SQL)"), a.createIndexTemplate},
+				paletteAction{tr("Очистить таблицу…"), func() { a.clearTable(false) }},
+				paletteAction{tr("Удалить таблицу…"), func() { a.clearTable(true) }},
 			)
 		}
 		if a.data.filter != "" {
-			actions = append(actions, paletteAction{"Сбросить фильтр", a.data.resetFilter})
+			actions = append(actions, paletteAction{tr("Сбросить фильтр"), a.data.resetFilter})
 		}
-		categories = append(categories, menuCategory{title: "Данные", actions: actions})
+		categories = append(categories, menuCategory{title: tr("Данные"), actions: actions})
 	}
 
 	if a.currentPage == pageStructure && a.structure != nil {
-		categories = append(categories, menuCategory{title: "Структура", actions: []paletteAction{
-			{"Редактировать структуру…", a.structure.openEditor},
+		categories = append(categories, menuCategory{title: tr("Структура"), actions: []paletteAction{
+			{tr("Редактировать структуру…"), a.structure.openEditor},
 		}})
 	}
 
 	if a.current != nil {
 		actions := []paletteAction{
-			{"SQL-консоль", a.openSQL},
+			{tr("SQL-консоль"), a.openSQL},
 		}
 		if a.currentPage == pageSQL && a.sql != nil {
-			actions = append(actions, paletteAction{"Конструктор запроса…", a.sql.openQueryBuilder})
+			actions = append(actions, paletteAction{tr("Конструктор запроса…"), a.sql.openQueryBuilder})
 		}
 		if a.currentPage == pageSQL && a.sql != nil && a.sql.result != nil && a.sql.result.IsSelect {
 			actions = append(actions,
-				paletteAction{"Экспорт результата в CSV…", func() { a.exportResult("csv") }},
-				paletteAction{"Экспорт результата в JSON…", func() { a.exportResult("json") }},
+				paletteAction{tr("Экспорт результата в CSV…"), func() { a.exportResult("csv") }},
+				paletteAction{tr("Экспорт результата в JSON…"), func() { a.exportResult("json") }},
 			)
 		}
 		categories = append(categories, menuCategory{title: "SQL", actions: actions})
 	}
 
-	categories = append(categories, menuCategory{title: "Интерфейс", actions: []paletteAction{
-		{"Тема: " + themeLabel(themeMC) + themeMarker(themeMC), func() { a.setTheme(themeMC) }},
-		{"Тема: " + themeLabel(themeDOS) + themeMarker(themeDOS), func() { a.setTheme(themeDOS) }},
-		{"Тема: " + themeLabel(themeDOSBlue) + themeMarker(themeDOSBlue), func() { a.setTheme(themeDOSBlue) }},
-		{"Размер страницы: " + fmt.Sprint(a.opts.PageSize) + "…", a.pageSizeDialog},
-		{"Разделители колонок: " + onOff(a.colLines), a.toggleColumnLines},
-		{"Запоминать последнюю папку: " + onOff(a.rememberDir), a.toggleRememberDir},
-		{"Сплэш при запуске: " + onOff(!a.opts.NoSplash), a.toggleSplash},
+	categories = append(categories, menuCategory{title: tr("Интерфейс"), actions: []paletteAction{
+		{tr("Тема: ") + themeLabel(themeMC) + mark(activeTheme == themeMC), func() { a.setTheme(themeMC) }},
+		{tr("Тема: ") + themeLabel(themeDOS) + mark(activeTheme == themeDOS), func() { a.setTheme(themeDOS) }},
+		{tr("Тема: ") + themeLabel(themeDOSBlue) + mark(activeTheme == themeDOSBlue), func() { a.setTheme(themeDOSBlue) }},
+		{trf("Размер страницы: %d…", a.opts.PageSize), a.pageSizeDialog},
+		{trf("Разделители колонок: %s", onOff(a.colLines)), a.toggleColumnLines},
+		{trf("Запоминать последнюю папку: %s", onOff(a.rememberDir)), a.toggleRememberDir},
+		{trf("Сплэш при запуске: %s", onOff(!a.opts.NoSplash)), a.toggleSplash},
+		{tr("Язык: ") + "Русский" + mark(activeLang == langRU), func() { a.setLanguage(langRU) }},
+		{tr("Язык: ") + "English" + mark(activeLang == langEN), func() { a.setLanguage(langEN) }},
 	}})
 
-	categories = append(categories, menuCategory{title: "Справка", actions: []paletteAction{
-		{"Помощь", a.openHelp},
-		{"О программе", a.showSplash},
+	categories = append(categories, menuCategory{title: tr("Справка"), actions: []paletteAction{
+		{tr("Помощь"), a.openHelp},
+		{tr("О программе"), a.showSplash},
 	}})
 	return categories
 }
@@ -480,6 +490,7 @@ func (a *App) paletteActions() []paletteAction {
 const noticeDuration = 3 * time.Second
 
 func (a *App) notify(text string) {
+	text = translateText(text)
 	a.noticeGen++
 	gen := a.noticeGen
 	if a.noticeTimer != nil {
@@ -549,11 +560,11 @@ func (a *App) notify(text string) {
 
 func (a *App) copyText(text string) {
 	if a.screen == nil {
-		a.showError(fmt.Errorf("терминал не поддерживает буфер обмена"))
+		a.showError(fmt.Errorf("%s", tr("терминал не поддерживает буфер обмена")))
 		return
 	}
 	a.screen.SetClipboard([]byte(text))
-	a.notify("Скопировано в буфер обмена")
+	a.notify(tr("Скопировано в буфер обмена"))
 }
 
 func (a *App) copySelectedCell() {
@@ -598,7 +609,7 @@ func (a *App) pathDialog(title, def string, accept func(string)) {
 				a.showError(fmt.Errorf("%s: это каталог", value))
 				return
 			}
-			a.showModal("Файл уже существует:\n"+value+"\n\nПерезаписать?", []string{"Перезаписать", "Отмена"}, func(label string) {
+			a.showModal(trf("Файл уже существует:\n%s\n\nПерезаписать?", value), []string{"Перезаписать", "Отмена"}, func(label string) {
 				if label == "Перезаписать" {
 					accept(value)
 				}
@@ -618,7 +629,7 @@ func (a *App) exportTable(format string) {
 		return
 	}
 	def := timestampName(a.data.obj.Name, "."+format)
-	title := "Экспорт таблицы в " + strings.ToUpper(format)
+	title := trf("Экспорт таблицы в %s", strings.ToUpper(format))
 	a.pathDialog(title, def, func(path string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
@@ -647,7 +658,7 @@ func (a *App) exportResult(format string) {
 		return
 	}
 	def := timestampName("query", "."+format)
-	a.pathDialog("Экспорт результата в "+strings.ToUpper(format), def, func(path string) {
+	a.pathDialog(trf("Экспорт результата в %s", strings.ToUpper(format)), def, func(path string) {
 		var n int64
 		var err error
 		if format == "csv" {
@@ -669,7 +680,7 @@ func (a *App) dumpDialog() {
 	}
 	base := strings.TrimSuffix(a.current.Name, filepath.Ext(a.current.Name))
 	def := timestampName(base, ".sql")
-	a.pathDialog("Экспорт SQL-дампа", def, func(path string) {
+	a.pathDialog(tr("Экспорт SQL-дампа"), def, func(path string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 		n, err := a.current.DumpSQL(ctx, path)
@@ -677,7 +688,7 @@ func (a *App) dumpDialog() {
 			a.showError(err)
 			return
 		}
-		a.showModal(fmt.Sprintf("SQL-дамп создан.\nСтрок данных: %d\n%s", n, path), []string{"OK"}, nil)
+		a.showModal(trf("SQL-дамп создан.\nСтрок данных: %d\n%s", n, path), []string{"OK"}, nil)
 	})
 }
 
@@ -687,7 +698,7 @@ func (a *App) backupDialog() {
 	}
 	base := strings.TrimSuffix(a.current.Name, filepath.Ext(a.current.Name))
 	def := timestampName(base+"-backup", ".db")
-	a.pathDialog("Резервная копия базы", def, func(path string) {
+	a.pathDialog(tr("Резервная копия базы"), def, func(path string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 		if _, statErr := os.Stat(path); statErr == nil {
@@ -700,7 +711,7 @@ func (a *App) backupDialog() {
 			a.showError(err)
 			return
 		}
-		a.showModal("Резервная копия создана:\n"+path, []string{"OK"}, nil)
+		a.showModal(trf("Резервная копия создана:\n%s", path), []string{"OK"}, nil)
 	})
 }
 
@@ -709,7 +720,7 @@ func (a *App) runMaintenance(sqlText, title string, requireWrite bool) {
 		return
 	}
 	if requireWrite && a.opts.ReadOnly {
-		a.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		a.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -736,7 +747,7 @@ func (a *App) runMaintenance(sqlText, title string, requireWrite bool) {
 		a.showTextDialog(title, text)
 		return
 	}
-	a.showModal(fmt.Sprintf("%s завершено. Затронуто строк: %d", title, res.Affected), []string{"OK"}, nil)
+	a.showModal(trf("%s завершено. Затронуто строк: %d", tr(title), res.Affected), []string{"OK"}, nil)
 }
 
 func (a *App) showTextDialog(title, text string) {
@@ -749,7 +760,7 @@ func (a *App) showTextDialog(title, text string) {
 	tv.SetBorder(true)
 	tv.SetBorderColor(colDialogBorder)
 	tv.SetTitleColor(colDialogTitle)
-	tv.SetTitle(" " + esc(title) + "  · Esc — закрыть ")
+	tv.SetTitle(" " + esc(title) + tr("  · Esc — закрыть "))
 	tv.SetText(text)
 	grid := tview.NewGrid().
 		SetRows(1, 0, 1).
@@ -761,7 +772,7 @@ func (a *App) showTextDialog(title, text string) {
 }
 
 func (a *App) inputPathDialog(title, def string, accept func(string)) {
-	a.inputDialog(title, "Файл: ", def, "Enter — открыть · Esc — отмена", func(value string) {
+	a.inputDialog(title, tr("Файл: "), def, tr("Enter — открыть · Esc — отмена"), func(value string) {
 		value = strings.TrimSpace(value)
 		if value == "" {
 			return
@@ -790,11 +801,11 @@ func (a *App) inputPathDialog(title, def string, accept func(string)) {
 
 func (a *App) importCSVDialog() {
 	if a.data == nil || a.currentPage != pageData {
-		a.showModal("Сначала откройте таблицу.", []string{"OK"}, nil)
+		a.showModal(tr("Сначала откройте таблицу."), []string{"OK"}, nil)
 		return
 	}
 	if !a.data.canEdit {
-		a.showModal("В эту таблицу нельзя вставлять строки.", []string{"OK"}, nil)
+		a.showModal(tr("В эту таблицу нельзя вставлять строки."), []string{"OK"}, nil)
 		return
 	}
 	def := a.data.obj.Name + ".csv"
@@ -825,7 +836,7 @@ func (a *App) importCSV(path string) {
 	}
 	first, err := r.Read()
 	if err == io.EOF {
-		a.showError(fmt.Errorf("CSV пуст"))
+		a.showError(fmt.Errorf("%s", tr("CSV пуст")))
 		return
 	}
 	if err != nil {
@@ -859,7 +870,7 @@ func (a *App) importCSV(path string) {
 			}
 		}
 		if len(names) == 0 {
-			a.showError(fmt.Errorf("в заголовке CSV нет колонок таблицы %s", a.data.obj.Name))
+			a.showError(fmt.Errorf(tr("в заголовке CSV нет колонок таблицы %s"), a.data.obj.Name))
 			return
 		}
 	} else {
@@ -908,12 +919,12 @@ func (a *App) importCSV(path string) {
 		a.showError(err)
 		return
 	}
-	a.data.notice = fmt.Sprintf("Импортировано строк: %d", count)
+	a.data.notice = trf("Импортировано строк: %d", count)
 	if err := a.data.Load(); err != nil {
 		a.showError(err)
 		return
 	}
-	a.showModal(fmt.Sprintf("Импортировано строк: %d", count), []string{"OK"}, nil)
+	a.showModal(trf("Импортировано строк: %d", count), []string{"OK"}, nil)
 }
 
 func (a *App) clearTable(drop bool) {
@@ -921,17 +932,17 @@ func (a *App) clearTable(drop bool) {
 		return
 	}
 	if !a.data.canEdit {
-		a.showModal("Эта таблица не поддерживает изменение строк.", []string{"OK"}, nil)
+		a.showModal(tr("Эта таблица не поддерживает изменение строк."), []string{"OK"}, nil)
 		return
 	}
-	action := "Очистить таблицу " + a.data.obj.Name + "?"
+	action := trf("Очистить таблицу %s?", a.data.obj.Name)
 	sqlText := "DELETE FROM " + db.QuoteIdent(a.data.obj.Name)
 	if drop {
-		action = "Удалить таблицу " + a.data.obj.Name + "?"
+		action = trf("Удалить таблицу %s?", a.data.obj.Name)
 		sqlText = "DROP TABLE " + db.QuoteIdent(a.data.obj.Name)
 	}
 	if a.opts.ReadOnly {
-		a.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		a.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	a.showModal(action, []string{"Да", "Отмена"}, func(label string) {
@@ -971,12 +982,12 @@ func (a *App) showSelectedBlob() {
 	}
 	cell, ok := a.data.selectedCell()
 	if !ok || !cell.Blob {
-		a.showModal("Выбранная ячейка не является BLOB.", []string{"OK"}, nil)
+		a.showModal(tr("Выбранная ячейка не является BLOB."), []string{"OK"}, nil)
 		return
 	}
 	rowID, ok := a.data.rowIDAtRow()
 	if !ok {
-		a.showError(fmt.Errorf("не удалось определить rowid строки"))
+		a.showError(fmt.Errorf("%s", tr("не удалось определить rowid строки")))
 		return
 	}
 	col := a.data.selectedColumn()
@@ -988,10 +999,10 @@ func (a *App) showSelectedBlob() {
 		return
 	}
 	if !isBlob {
-		a.showModal("Значение не является BLOB.", []string{"OK"}, nil)
+		a.showModal(tr("Значение не является BLOB."), []string{"OK"}, nil)
 		return
 	}
-	a.showTextDialog(fmt.Sprintf("%s.%s · %d байт", a.data.obj.Name, col.Name, len(data)), hexDump(data))
+	a.showTextDialog(trf("%s.%s · %d байт", a.data.obj.Name, col.Name, len(data)), hexDump(data))
 }
 
 func (a *App) saveSelectedBlob() {
@@ -1000,12 +1011,12 @@ func (a *App) saveSelectedBlob() {
 	}
 	cell, ok := a.data.selectedCell()
 	if !ok || !cell.Blob {
-		a.showModal("Выбранная ячейка не является BLOB.", []string{"OK"}, nil)
+		a.showModal(tr("Выбранная ячейка не является BLOB."), []string{"OK"}, nil)
 		return
 	}
 	rowID, ok := a.data.rowIDAtRow()
 	if !ok {
-		a.showError(fmt.Errorf("не удалось определить rowid строки"))
+		a.showError(fmt.Errorf("%s", tr("не удалось определить rowid строки")))
 		return
 	}
 	col := a.data.selectedColumn()
@@ -1017,16 +1028,16 @@ func (a *App) saveSelectedBlob() {
 		return
 	}
 	if !isBlob {
-		a.showModal("Значение не является BLOB.", []string{"OK"}, nil)
+		a.showModal(tr("Значение не является BLOB."), []string{"OK"}, nil)
 		return
 	}
 	def := fmt.Sprintf("%s-%s-%d.bin", a.data.obj.Name, col.Name, rowID)
-	a.pathDialog("Сохранить BLOB", def, func(path string) {
+	a.pathDialog(tr("Сохранить BLOB"), def, func(path string) {
 		if err := os.WriteFile(path, data, 0o644); err != nil {
 			a.showError(err)
 			return
 		}
-		a.showModal(fmt.Sprintf("Сохранено %d байт:\n%s", len(data), path), []string{"OK"}, nil)
+		a.showModal(trf("Сохранено %d байт:\n%s", len(data), path), []string{"OK"}, nil)
 	})
 }
 
@@ -1066,7 +1077,7 @@ func hexDump(data []byte) string {
 		b.WriteString("|\n")
 	}
 	if truncated {
-		b.WriteString("\n... показаны первые 64 KiB\n")
+		b.WriteString(tr("\n... показаны первые 64 KiB\n"))
 	}
 	return b.String()
 }

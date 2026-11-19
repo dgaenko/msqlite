@@ -125,7 +125,7 @@ func (a *App) selectEntryForce(index int, showErr, force bool) {
 		return
 	}
 	a.closeDatabase()
-	a.clearTables("(выберите базу данных)")
+	a.clearTables(tr("(выберите базу данных)"))
 	a.updateHeader()
 	a.updateMainStatus()
 }
@@ -147,7 +147,7 @@ func (a *App) changeDir(path, selectPath string) {
 func (a *App) goUp() {
 	parent := filepath.Dir(a.dir)
 	if parent == a.dir {
-		a.setMainStatus("Корень файловой системы: " + a.dir)
+		a.setMainStatus(tr("Корень файловой системы: ") + a.dir)
 		return
 	}
 	a.changeDir(parent, a.dir)

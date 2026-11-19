@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -104,7 +103,7 @@ func (p *InsertPage) build() {
 	p.fields = tview.NewFlex().SetDirection(tview.FlexRow)
 	p.fields.SetBorder(true)
 	p.fields.SetBorderColor(colFocus)
-	p.fields.SetTitle(" Значения ")
+	p.fields.SetTitle(tr(" Значения "))
 	p.fields.SetTitleColor(colTitle)
 
 	p.status = tview.NewTextView()
@@ -171,11 +170,11 @@ func (p *InsertPage) restyle() {
 }
 
 func (p *InsertPage) updateHead() {
-	mode := "только чтение"
+	mode := tr("только чтение")
 	if !p.app.opts.ReadOnly {
-		mode = "правка"
+		mode = tr("правка")
 	}
-	p.head.SetText(fmt.Sprintf("[yellow::b]Добавление строки[-:-:-] [white]· %s  [silver]· колонок: %d · %s",
+	p.head.SetText(trf("[yellow::b]Добавление строки[-:-:-] [white]· %s  [silver]· колонок: %d · %s",
 		esc(p.obj.Name), len(p.cols), mode))
 }
 
@@ -225,10 +224,10 @@ func (p *InsertPage) render() {
 
 func (p *InsertPage) updateStatus() {
 	if len(p.inputs) == 0 {
-		p.status.SetText("Нет колонок")
+		p.status.SetText(tr("Нет колонок"))
 		return
 	}
-	line := fmt.Sprintf("Поле %d/%d · пусто — DEFAULT · NULL — NULL · '' — пустая строка",
+	line := trf("Поле %d/%d · пусто — DEFAULT · NULL — NULL · '' — пустая строка",
 		p.active+1, len(p.inputs))
 	p.status.SetText(esc(line))
 }
@@ -289,5 +288,12 @@ func (p *InsertPage) save() {
 		p.app.showError(err)
 		return
 	}
-	p.data.status.SetText(esc("Строка добавлена · " + strings.TrimSpace(p.data.status.GetText(true))))
+	p.data.status.SetText(esc(tr("Строка добавлена · ") + strings.TrimSpace(p.data.status.GetText(true))))
+}
+
+func (p *InsertPage) relocalize() {
+	p.fields.SetTitle(tr(" Значения "))
+	p.restyle()
+	p.updateHead()
+	p.updateStatus()
 }

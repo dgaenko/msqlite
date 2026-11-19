@@ -16,7 +16,7 @@ import (
 func (p *SQLPage) openQueryBuilder() {
 	tables := p.app.objects
 	if len(tables) == 0 {
-		p.app.showModal("В базе нет таблиц или представлений.", []string{"OK"}, nil)
+		p.app.showModal(tr("В базе нет таблиц или представлений."), []string{"OK"}, nil)
 		return
 	}
 
@@ -25,7 +25,7 @@ func (p *SQLPage) openQueryBuilder() {
 		selected = make(map[int]bool)
 	)
 
-	tableDD := tview.NewDropDown().SetLabel("Таблица: ").SetLabelWidth(12)
+	tableDD := tview.NewDropDown().SetLabel(tr("Таблица: ")).SetLabelWidth(12)
 	tableNames := make([]string, len(tables))
 	for i, obj := range tables {
 		tableNames[i] = obj.Name
@@ -36,7 +36,7 @@ func (p *SQLPage) openQueryBuilder() {
 	columnsLabel := tview.NewTextView().SetDynamicColors(true)
 	columnsLabel.SetBackgroundColor(colDialogBg)
 	columnsLabel.SetTextColor(colDialogTitle)
-	columnsLabel.SetText("Колонки (Space/Enter — выбрать, пусто — все):")
+	columnsLabel.SetText(tr("Колонки (Space/Enter — выбрать, пусто — все):"))
 
 	columnList := tview.NewList()
 	styleList(columnList, colDialogBg, colDialogFg, colDialogDim)
@@ -45,7 +45,7 @@ func (p *SQLPage) openQueryBuilder() {
 	columnList.SetWrapAround(true)
 
 	whereField := tview.NewInputField().SetLabel("WHERE: ").SetLabelWidth(12)
-	whereField.SetPlaceholder("условие (необязательно)")
+	whereField.SetPlaceholder(tr("условие (необязательно)"))
 
 	orderDD := tview.NewDropDown().SetLabel("ORDER BY: ").SetLabelWidth(10)
 	orderDD.SetUseStyleTags(false)
@@ -55,7 +55,7 @@ func (p *SQLPage) openQueryBuilder() {
 	dirDD.SetCurrentOption(0)
 
 	limitField := tview.NewInputField().SetLabel("LIMIT: ").SetLabelWidth(12)
-	limitField.SetPlaceholder("без ограничения")
+	limitField.SetPlaceholder(tr("без ограничения"))
 
 	for _, dd := range []*tview.DropDown{tableDD, orderDD, dirDD} {
 		dd.SetLabelColor(colDialogTitle)
@@ -79,7 +79,7 @@ func (p *SQLPage) openQueryBuilder() {
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]OK — вставить SELECT в SQL-консоль")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("OK — вставить SELECT в SQL-консоль"))
 
 	columnText := func(index int) string {
 		name := cols[index].Name
@@ -124,7 +124,7 @@ func (p *SQLPage) openQueryBuilder() {
 		defer cancel()
 		loaded, err := p.db.Columns(ctx, tables[index].Name)
 		if err != nil {
-			hint.SetText("[red]Ошибка: " + esc(err.Error()) + "[-:-:-]")
+			hint.SetText("[red]" + tr("Ошибка: ") + esc(translateText(err.Error())) + "[-:-:-]")
 			return
 		}
 		cols = loaded
@@ -145,7 +145,7 @@ func (p *SQLPage) openQueryBuilder() {
 	insertQuery := func() {
 		tableIndex, _ := tableDD.GetCurrentOption()
 		if tableIndex < 0 || tableIndex >= len(tables) {
-			hint.SetText("[red]Выберите таблицу[-:-:-]")
+			hint.SetText("[red]" + tr("Выберите таблицу") + "[-:-:-]")
 			return
 		}
 		table := tables[tableIndex]
@@ -162,7 +162,7 @@ func (p *SQLPage) openQueryBuilder() {
 		where := strings.TrimSpace(whereField.GetText())
 		if where != "" {
 			if err := db.ValidateFilter(where); err != nil {
-				hint.SetText("[red]" + esc(err.Error()) + "[-:-:-]")
+				hint.SetText("[red]" + esc(translateText(err.Error())) + "[-:-:-]")
 				return
 			}
 		}
@@ -172,7 +172,7 @@ func (p *SQLPage) openQueryBuilder() {
 		if limitText != "" {
 			n, err := strconv.Atoi(limitText)
 			if err != nil || n <= 0 {
-				hint.SetText("[red]LIMIT должен быть положительным числом[-:-:-]")
+				hint.SetText("[red]" + tr("LIMIT должен быть положительным числом") + "[-:-:-]")
 				return
 			}
 			limit = n
@@ -253,7 +253,7 @@ func (p *SQLPage) openQueryBuilder() {
 
 	tableDD.SetCurrentOption(0)
 	loadColumns()
-	p.app.showFramedDialog("Конструктор запроса", content, 78, 20, tableDD)
+	p.app.showFramedDialog(tr("Конструктор запроса"), content, 78, 20, tableDD)
 	p.app.dialogEscape = func() bool {
 		return tableDD.IsOpen() || orderDD.IsOpen() || dirDD.IsOpen()
 	}

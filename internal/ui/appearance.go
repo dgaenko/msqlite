@@ -16,16 +16,16 @@ func (a *App) setTheme(name string) {
 	applyTheme()
 	a.restyleTheme()
 	a.persistSettings()
-	a.notify("Тема интерфейса: " + themeLabel(name))
+	a.notify(trf("Тема интерфейса: %s", themeLabel(name)))
 }
 
 func (a *App) toggleSplash() {
 	a.opts.NoSplash = !a.opts.NoSplash
 	a.persistSettings()
 	if a.opts.NoSplash {
-		a.notify("Сплэш при запуске выключен")
+		a.notify(tr("Сплэш при запуске выключен"))
 	} else {
-		a.notify("Сплэш при запуске включён")
+		a.notify(tr("Сплэш при запуске включён"))
 	}
 }
 
@@ -33,9 +33,9 @@ func (a *App) toggleRememberDir() {
 	a.rememberDir = !a.rememberDir
 	a.persistSettings()
 	if a.rememberDir {
-		a.notify("Запоминание последней папки включено")
+		a.notify(tr("Запоминание последней папки включено"))
 	} else {
-		a.notify("Запоминание последней папки выключено")
+		a.notify(tr("Запоминание последней папки выключено"))
 	}
 }
 
@@ -44,9 +44,9 @@ func (a *App) toggleColumnLines() {
 	a.applyColumnLines()
 	a.persistSettings()
 	if a.colLines {
-		a.notify("Разделители колонок включены")
+		a.notify(tr("Разделители колонок включены"))
 	} else {
-		a.notify("Разделители колонок выключены")
+		a.notify(tr("Разделители колонок выключены"))
 	}
 }
 
@@ -67,7 +67,7 @@ func (a *App) pageSizeDialog() {
 func (a *App) setPageSize(value string) {
 	n, err := strconv.Atoi(strings.TrimSpace(value))
 	if err != nil || n < 1 || n > 10000 {
-		a.showError(fmt.Errorf("размер страницы должен быть от 1 до 10000"))
+		a.showError(fmt.Errorf("%s", tr("размер страницы должен быть от 1 до 10000")))
 		return
 	}
 	a.opts.PageSize = n
@@ -82,7 +82,7 @@ func (a *App) setPageSize(value string) {
 		}
 	}
 	a.persistSettings()
-	a.notify(fmt.Sprintf("Размер страницы: %d", n))
+	a.notify(trf("Размер страницы: %d", n))
 }
 
 func (a *App) restyleTheme() {
@@ -154,5 +154,51 @@ func (a *App) togglePanel() {
 		a.app.SetFocus(a.table)
 	} else {
 		a.app.SetFocus(a.dbList)
+	}
+}
+
+// setLanguage switches the UI language and refreshes visible labels.
+func (a *App) setLanguage(code string) {
+	if !setActiveLang(code) {
+		return
+	}
+	a.persistSettings()
+	a.relocalize()
+	a.notify(trf("Язык интерфейса: %s", languageName(code)))
+}
+
+// relocalize updates static texts after a language change.
+func (a *App) relocalize() {
+	if a.dbList != nil {
+		a.dbList.SetTitle(tr(" Базы и папки "))
+	}
+	if a.table != nil {
+		a.table.SetTitle(tr(" Таблицы и представления "))
+	}
+	a.panelFocused(a.focus)
+	a.setMainHints()
+	a.updateHeader()
+	a.updateMainStatus()
+	switch a.currentPage {
+	case pageData:
+		if a.data != nil {
+			a.data.relocalize()
+		}
+	case pageStructure:
+		if a.structure != nil {
+			a.structure.relocalize()
+		}
+	case pageSQL:
+		if a.sql != nil {
+			a.sql.relocalize()
+		}
+	case pageInsert:
+		if a.insert != nil {
+			a.insert.relocalize()
+		}
+	case pageHelp:
+		if a.help != nil {
+			a.help.relocalize()
+		}
 	}
 }

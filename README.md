@@ -32,6 +32,8 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
 - Три темы интерфейса: Midnight Commander, DOS Navigator (серая) и
   DOS Navigator Blue (синяя, как в классическом DN II, с диалогами в стиле
   DN II); переключение в разделе «Интерфейс».
+- Русская и английская локализация интерфейса; язык переключается в разделе
+  «Интерфейс» и запоминается.
 - Экспорт таблицы, текущей страницы, выбранной строки или результата SQL
   в CSV/JSON;
   импорт CSV и JSON, экспорт SQL-дампа.
@@ -250,8 +252,8 @@ msqlite -version
 - Открытие недавних баз (список хранится в конфигурации пользователя)
   и создание новой базы данных.
 - «Интерфейс» — выбор темы Midnight Commander, DOS Navigator или
-  DOS Navigator Blue и размера страницы данных. Текущая тема отмечена
-  галочкой.
+  DOS Navigator Blue, языка (Русский / English) и размера страницы данных.
+  Текущий выбор отмечен галочкой.
 - «О программе» в разделе «Справка» — повторный показ сплеша.
 - Экспорт текущей таблицы (все строки), страницы, выбранной строки или
   результата SQL в CSV/JSON.
@@ -284,6 +286,7 @@ msqlite -version
 `~/.config/msqlite/config.json`:
 
 - тема (`mc`/`dos`/`dos-blue`);
+- язык интерфейса (`ru`/`en`);
 - размер страницы данных;
 - вертикальные разделители колонок таблицы;
 - режим по умолчанию (только чтение / чтение-запись);
@@ -291,7 +294,7 @@ msqlite -version
 - показ сплэша при запуске;
 - история SQL-запросов (до 200).
 
-Тема, размер страницы, разделители колонок и запоминание последней папки
+Тема, язык, размер страницы, разделители колонок и запоминание последней папки
 меняются в `F9` → «Интерфейс», режим — клавишей `F8`.
 Флаги `-rw` и `-page` имеют приоритет над сохранёнными значениями при запуске.
 Последний каталог восстанавливается, если не заданы `-dir` или путь в аргументе,
@@ -427,6 +430,8 @@ are static and have no external dependencies.
 - Three UI themes: Midnight Commander, DOS Navigator (gray) and DOS Navigator
   Blue (blue, like classic DN II, with DN II-style dialogs); switch in the
   "Interface" section.
+- Russian and English UI localization; the language is switched in the
+  "Interface" section and remembered.
 - Export a table, the current page, the selected row or an SQL result to
   CSV/JSON; import CSV and JSON, export an SQL dump.
 - Database backup, `VACUUM`, `ANALYZE`, integrity check.
@@ -643,7 +648,8 @@ select items with `↑`/`↓`, execute with `Enter`, close with `Esc`. Sections:
 - Open recent databases (the list is stored in the user configuration) and
   create a new database.
 - "Interface" — choose the Midnight Commander, DOS Navigator or DOS Navigator
-  Blue theme and the data page size. The current theme is checked.
+  Blue theme, the language (Russian / English) and the data page size. The
+  current choice is checked.
 - "About" in the "Help" section — show the splash screen again.
 - Export the current table (all rows), page, selected row or SQL result to
   CSV/JSON.
@@ -674,6 +680,7 @@ separators; they are disabled in `F9` → "Interface" → "Column separators".
 Interface settings are saved automatically to `~/.config/msqlite/config.json`:
 
 - theme (`mc`/`dos`/`dos-blue`);
+- UI language (`ru`/`en`);
 - data page size;
 - vertical table column separators;
 - default mode (read-only / read-write);
@@ -681,8 +688,8 @@ Interface settings are saved automatically to `~/.config/msqlite/config.json`:
 - show the splash screen on startup;
 - SQL query history (up to 200).
 
-The theme, page size, column separators and last-folder memory are changed in
-`F9` → "Interface"; the mode is changed with `F8`. The `-rw` and `-page` flags
+The theme, language, page size, column separators and last-folder memory are
+changed in `F9` → "Interface"; the mode is changed with `F8`. The `-rw` and `-page` flags
 take precedence over saved values at startup. The last directory is restored if
 `-dir` or a path argument is not given and last-folder memory is enabled. The
 old `~/.config/msqlite/theme` file is used until the shared `config.json` is

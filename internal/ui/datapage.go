@@ -73,7 +73,7 @@ func (p *DataPage) build() {
 	styleTable(p.table)
 	p.table.SetSeparator(columnLineSeparator(p.app.colLines))
 	p.table.SetBorder(true)
-	p.table.SetTitle(" Данные ")
+	p.table.SetTitle(tr(" Данные "))
 	p.table.SetBorderColor(colBorder)
 	p.table.SetTitleColor(colTitle)
 	p.table.SetSelectedFunc(func(row, col int) { p.editCellAt(row, col) })
@@ -397,11 +397,11 @@ func (p *DataPage) populate() {
 }
 
 func (p *DataPage) updateHeader() {
-	mode := "только чтение"
+	mode := tr("только чтение")
 	if p.canEdit && !p.app.opts.ReadOnly {
-		mode = "правка"
+		mode = tr("правка")
 	}
-	title := fmt.Sprintf("[yellow::b]%s[-:-:-] [white]· %s  [silver]· колонок: %d · %s",
+	title := trf("[yellow::b]%s[-:-:-] [white]· %s  [silver]· колонок: %d · %s",
 		esc(p.obj.Name), typeLabel(p.obj.Type), len(p.cols), mode)
 	p.header.SetText(title)
 }
@@ -415,33 +415,33 @@ func (p *DataPage) updateStatus() {
 	if p.total > 0 {
 		page = int64(p.offset)/int64(p.size) + 1
 	}
-	line := fmt.Sprintf("Строк: %d · страница %d/%d", p.total, page, pages)
+	line := trf("Строк: %d · страница %d/%d", p.total, page, pages)
 	if p.order >= 0 && p.order < len(p.cols) {
 		dir := "ASC"
 		if p.desc {
 			dir = "DESC"
 		}
-		line += fmt.Sprintf(" · сортировка: %s %s", p.cols[p.order].Name, dir)
+		line += trf(" · сортировка: %s %s", p.cols[p.order].Name, dir)
 	}
 	if p.filter != "" {
-		line += " · фильтр: " + truncate(p.filter, 48)
+		line += tr(" · фильтр: ") + truncate(p.filter, 48)
 	}
 	if p.notice != "" {
 		line = p.notice + " · " + line
 	}
 	if p.err != nil {
-		line = "Ошибка: " + p.err.Error()
+		line = tr("Ошибка: ") + translateText(p.err.Error())
 	}
 	p.status.SetText(esc(line))
 }
 
 func (p *DataPage) setErrorStatus(err error) {
-	p.status.SetText(esc("Ошибка: " + err.Error()))
+	p.status.SetText(esc(tr("Ошибка: ") + translateText(err.Error())))
 }
 
 func (p *DataPage) updatePreview(row, col int) {
 	if row < 2 || col < 1 || row-2 >= len(p.rows) || col-1 >= len(p.cols) {
-		p.preview.SetText(esc("Enter/F2 — правка ячейки · Ins — вставка · Del — удаление · s или клик по заголовку — сортировка"))
+		p.preview.SetText(esc(tr("Enter/F2 — правка ячейки · Ins — вставка · Del — удаление · s или клик по заголовку — сортировка")))
 		return
 	}
 	cell := p.rows[row-2][col-1]
@@ -467,7 +467,7 @@ func (p *DataPage) editCellAt(row, col int) {
 		return
 	}
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw."), []string{"OK"}, nil)
 		return
 	}
 	p.app.editCellDialog(p, row, col)
@@ -484,7 +484,7 @@ func (p *DataPage) rowIDAt(row int) (int64, bool) {
 func (p *DataPage) saveCell(row, col int, value any) {
 	rowID, ok := p.rowIDAt(row)
 	if !ok {
-		p.app.showError(fmt.Errorf("не удалось определить rowid строки"))
+		p.app.showError(fmt.Errorf("%s", tr("не удалось определить rowid строки")))
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -497,7 +497,7 @@ func (p *DataPage) saveCell(row, col int, value any) {
 		p.app.showError(err)
 		return
 	}
-	p.app.notify("Ячейка обновлена")
+	p.app.notify(tr("Ячейка обновлена"))
 }
 
 func (p *DataPage) deleteSelectedRow() {
@@ -506,25 +506,25 @@ func (p *DataPage) deleteSelectedRow() {
 		return
 	}
 	if !p.canEdit {
-		msg := "Эта таблица не поддерживает построчное редактирование."
+		msg := tr("Эта таблица не поддерживает построчное редактирование.")
 		if p.obj.Type == "view" {
-			msg = "Представления доступны только для чтения."
+			msg = tr("Представления доступны только для чтения.")
 		}
 		p.app.showModal(msg, []string{"OK"}, nil)
 		return
 	}
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw."), []string{"OK"}, nil)
 		return
 	}
 	rowID, ok := p.rowIDAt(row)
 	if !ok {
-		p.app.showError(fmt.Errorf("не удалось определить rowid строки"))
+		p.app.showError(fmt.Errorf("%s", tr("не удалось определить rowid строки")))
 		return
 	}
 	_ = col
 	num := int64(p.offset) + int64(row-2) + 1
-	p.app.showModal(fmt.Sprintf("Удалить строку №%d из %s?", num, p.obj.Name), []string{"Удалить", "Отмена"}, func(label string) {
+	p.app.showModal(trf("Удалить строку №%d из %s?", num, p.obj.Name), []string{"Удалить", "Отмена"}, func(label string) {
 		if label != "Удалить" {
 			return
 		}
@@ -536,28 +536,28 @@ func (p *DataPage) deleteSelectedRow() {
 			return
 		}
 		if n == 0 {
-			p.app.showError(fmt.Errorf("строка не найдена"))
+			p.app.showError(fmt.Errorf("%s", tr("строка не найдена")))
 			return
 		}
 		if err := p.Load(); err != nil {
 			p.app.showError(err)
 			return
 		}
-		p.app.notify("Строка удалена")
+		p.app.notify(tr("Строка удалена"))
 	})
 }
 
 func (p *DataPage) openInsert() {
 	if !p.canEdit {
-		msg := "Эта таблица не поддерживает построчное редактирование."
+		msg := tr("Эта таблица не поддерживает построчное редактирование.")
 		if p.obj.Type == "view" {
-			msg = "Представления доступны только для чтения."
+			msg = tr("Представления доступны только для чтения.")
 		}
 		p.app.showModal(msg, []string{"OK"}, nil)
 		return
 	}
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\n\nЗапустите msqlite с флагом -rw."), []string{"OK"}, nil)
 		return
 	}
 	p.app.openInsert(p)
@@ -696,7 +696,7 @@ func (p *DataPage) resetFilter() {
 	}
 	p.applyFilter("")
 	if p.filter == "" {
-		p.app.notify("Фильтр сброшен")
+		p.app.notify(tr("Фильтр сброшен"))
 	}
 }
 
@@ -769,16 +769,16 @@ func (p *DataPage) autoPKIndex() int {
 
 func (p *DataPage) duplicateSelectedRow() {
 	if !p.canEdit {
-		p.app.showModal("Эта таблица не поддерживает построчное редактирование.", []string{"OK"}, nil)
+		p.app.showModal(tr("Эта таблица не поддерживает построчное редактирование."), []string{"OK"}, nil)
 		return
 	}
 	if p.app.opts.ReadOnly {
-		p.app.showModal("База открыта в режиме только чтения.\n\nЗапустите с -rw или нажмите F8.", []string{"OK"}, nil)
+		p.app.showModal(tr("База открыта в режиме только чтения.\n\nЗапустите с -rw или нажмите F8."), []string{"OK"}, nil)
 		return
 	}
 	rowID, ok := p.rowIDAtRow()
 	if !ok {
-		p.app.showError(fmt.Errorf("не удалось определить rowid строки"))
+		p.app.showError(fmt.Errorf("%s", tr("не удалось определить rowid строки")))
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -806,5 +806,10 @@ func (p *DataPage) duplicateSelectedRow() {
 		p.app.showError(err)
 		return
 	}
-	p.app.notify("Строка дублирована")
+	p.app.notify(tr("Строка дублирована"))
+}
+
+func (p *DataPage) relocalize() {
+	p.table.SetTitle(tr(" Данные "))
+	p.restyle()
 }

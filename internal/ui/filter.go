@@ -41,16 +41,16 @@ func (a *App) filterDialog(p *DataPage) {
 		ops[i] = op.label
 	}
 
-	colDD := tview.NewDropDown().SetLabel("Колонка: ").SetLabelWidth(12)
+	colDD := tview.NewDropDown().SetLabel(tr("Колонка: ")).SetLabelWidth(12)
 	colDD.SetOptions(names, nil)
-	opDD := tview.NewDropDown().SetLabel("Оператор: ").SetLabelWidth(12)
+	opDD := tview.NewDropDown().SetLabel(tr("Оператор: ")).SetLabelWidth(12)
 	opDD.SetOptions(ops, nil)
 
-	valueField := tview.NewInputField().SetLabel("Значение: ").SetLabelWidth(13)
-	valueField.SetPlaceholder("значение")
+	valueField := tview.NewInputField().SetLabel(tr("Значение: ")).SetLabelWidth(13)
+	valueField.SetPlaceholder(tr("значение"))
 	rawField := tview.NewInputField().SetLabel("WHERE: ").SetLabelWidth(13)
 	rawField.SetText(p.filter)
-	rawField.SetPlaceholder("выражение WHERE")
+	rawField.SetPlaceholder(tr("выражение WHERE"))
 
 	for _, dd := range []*tview.DropDown{colDD, opDD} {
 		dd.SetTextOptions(" ", "", " ", "", "")
@@ -155,14 +155,14 @@ func (a *App) filterDialog(p *DataPage) {
 	head.SetBackgroundColor(colDialogBg)
 	head.SetTextColor(colDialogFg)
 	head.SetWrap(false)
-	head.SetText(fmt.Sprintf("[%s::b]WHERE[-:-:-]  [%s]· конструктор для %s[-:-:-]",
-		colorName(colDialogTitle), colorName(colDialogDim), esc(p.obj.Name)))
+	head.SetText(fmt.Sprintf("[%s::b]WHERE[-:-:-]  [%s]%s[-:-:-]",
+		colorName(colDialogTitle), colorName(colDialogDim), esc(trf("· конструктор для %s", p.obj.Name))))
 
 	hint := tview.NewTextView().SetDynamicColors(true)
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]Выберите колонку, оператор и значение либо введите WHERE вручную")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Выберите колонку, оператор и значение либо введите WHERE вручную"))
 
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(head, 1, 0, false).
@@ -179,7 +179,7 @@ func (a *App) filterDialog(p *DataPage) {
 		AddItem(inner, 0, 1, true).
 		AddItem(nil, 2, 0, false)
 
-	a.showFramedDialog("Фильтр · "+p.obj.Name, content, 76, 13, okBtn)
+	a.showFramedDialog(trf("Фильтр · %s", p.obj.Name), content, 76, 13, okBtn)
 	a.dialogEscape = func() bool {
 		return colDD.IsOpen() || opDD.IsOpen()
 	}

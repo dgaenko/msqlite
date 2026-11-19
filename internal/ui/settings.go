@@ -9,6 +9,7 @@ import (
 
 type appSettings struct {
 	Theme       string   `json:"theme,omitempty"`
+	Language    string   `json:"language,omitempty"`
 	PageSize    int      `json:"page_size,omitempty"`
 	ReadOnly    *bool    `json:"read_only,omitempty"`
 	ColumnLines *bool    `json:"column_lines,omitempty"`
@@ -71,6 +72,7 @@ func (a *App) persistSettings() {
 	}
 	saveSettings(appSettings{
 		Theme:       activeTheme,
+		Language:    activeLang,
 		PageSize:    a.opts.PageSize,
 		ReadOnly:    &readOnly,
 		ColumnLines: &columnLines,

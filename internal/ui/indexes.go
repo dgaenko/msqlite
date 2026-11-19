@@ -17,7 +17,7 @@ func (a *App) createIndexDialog() {
 		return
 	}
 	if a.opts.ReadOnly {
-		a.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		a.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	defCol := ""
@@ -32,14 +32,14 @@ func (a *App) createIndexDialog() {
 	var unique bool
 
 	form := tview.NewForm().
-		AddInputField("Имя индекса", name, 0, nil, func(text string) { name = text }).
-		AddInputField("Колонки", columns, 0, nil, func(text string) { columns = text }).
+		AddInputField(tr("Имя индекса"), name, 0, nil, func(text string) { name = text }).
+		AddInputField(tr("Колонки"), columns, 0, nil, func(text string) { columns = text }).
 		AddCheckbox("UNIQUE", false, func(checked bool) { unique = checked })
 	styleDialogForm(form)
-	form.AddButton("Создать", func() {
+	form.AddButton(tr("Создать"), func() {
 		idxName := strings.TrimSpace(name)
 		if idxName == "" {
-			a.showError(fmt.Errorf("укажите имя индекса"))
+			a.showError(fmt.Errorf("%s", tr("укажите имя индекса")))
 			return
 		}
 		var parts []string
@@ -51,7 +51,7 @@ func (a *App) createIndexDialog() {
 			parts = append(parts, db.QuoteIdent(col))
 		}
 		if len(parts) == 0 {
-			a.showError(fmt.Errorf("укажите хотя бы одну колонку"))
+			a.showError(fmt.Errorf("%s", tr("укажите хотя бы одну колонку")))
 			return
 		}
 		sqlText := "CREATE "
@@ -68,11 +68,11 @@ func (a *App) createIndexDialog() {
 			return
 		}
 		a.refreshObjectsSelect(a.data.obj.Name)
-		a.data.notice = "Индекс создан: " + idxName
-		a.notify("Индекс создан: " + idxName)
+		a.data.notice = tr("Индекс создан: ") + idxName
+		a.notify(tr("Индекс создан: ") + idxName)
 	}).
-		AddButton("Отмена", a.closeDialog)
-	a.showFramedDialog("Создать индекс", form, 64, 13, form)
+		AddButton(tr("Отмена"), a.closeDialog)
+	a.showFramedDialog(tr("Создать индекс"), form, 64, 13, form)
 }
 
 func (a *App) dropIndexDialog() {
@@ -80,7 +80,7 @@ func (a *App) dropIndexDialog() {
 		return
 	}
 	if a.opts.ReadOnly {
-		a.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		a.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -97,7 +97,7 @@ func (a *App) dropIndexDialog() {
 		}
 	}
 	if len(names) == 0 {
-		a.showModal("В таблице нет индексов, созданных пользователем.", []string{"OK"}, nil)
+		a.showModal(tr("В таблице нет индексов, созданных пользователем."), []string{"OK"}, nil)
 		return
 	}
 	list := tview.NewList()
@@ -114,7 +114,7 @@ func (a *App) dropIndexDialog() {
 		}
 		idxName := names[i]
 		a.closeDialog()
-		a.showModal("Удалить индекс "+idxName+"?", []string{"Удалить", "Отмена"}, func(label string) {
+		a.showModal(trf("Удалить индекс %s?", idxName), []string{"Удалить", "Отмена"}, func(label string) {
 			if label != "Удалить" {
 				return
 			}
@@ -125,11 +125,11 @@ func (a *App) dropIndexDialog() {
 				return
 			}
 			a.refreshObjectsSelect(a.data.obj.Name)
-			a.notify("Индекс удалён: " + idxName)
+			a.notify(tr("Индекс удалён: ") + idxName)
 		})
 	}
 	list.SetSelectedFunc(func(int, string, string, rune) { drop() })
-	a.showListDialog("Удалить индекс", 60, list, drop)
+	a.showListDialog(tr("Удалить индекс"), 60, list, drop)
 }
 
 func styleDialogForm(form *tview.Form) {

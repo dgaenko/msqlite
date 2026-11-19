@@ -16,7 +16,7 @@ func (a *App) exportPage(format string) {
 		return
 	}
 	def := timestampName(a.data.obj.Name+"-page", "."+format)
-	a.pathDialog("Экспорт страницы в "+strings.ToUpper(format), def, func(path string) {
+	a.pathDialog(trf("Экспорт страницы в %s", strings.ToUpper(format)), def, func(path string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		opts := db.PageOptions{
@@ -45,24 +45,24 @@ func (a *App) exportPage(format string) {
 			a.showError(err)
 			return
 		}
-		a.showModal(fmt.Sprintf("Экспортировано строк: %d\n%s", n, path), []string{"OK"}, nil)
+		a.showModal(trf("Экспортировано строк: %d\n%s", n, path), []string{"OK"}, nil)
 	})
 }
 
 func (a *App) importJSONDialog() {
 	if a.data == nil || a.currentPage != pageData {
-		a.showModal("Сначала откройте таблицу.", []string{"OK"}, nil)
+		a.showModal(tr("Сначала откройте таблицу."), []string{"OK"}, nil)
 		return
 	}
 	if !a.data.canEdit {
-		a.showModal("В эту таблицу нельзя вставлять строки.", []string{"OK"}, nil)
+		a.showModal(tr("В эту таблицу нельзя вставлять строки."), []string{"OK"}, nil)
 		return
 	}
 	if a.opts.ReadOnly {
-		a.showModal("База открыта в режиме только чтения.\nПереключите режим клавишей F8.", []string{"OK"}, nil)
+		a.showModal(tr("База открыта в режиме только чтения.\nПереключите режим клавишей F8."), []string{"OK"}, nil)
 		return
 	}
-	a.inputPathDialog("Импорт JSON", a.data.obj.Name+".json", func(path string) {
+	a.inputPathDialog(tr("Импорт JSON"), a.data.obj.Name+".json", func(path string) {
 		a.importJSON(path)
 	})
 }
@@ -81,11 +81,11 @@ func (a *App) importJSON(path string) {
 	dec.UseNumber()
 	var objects []map[string]any
 	if err := dec.Decode(&objects); err != nil {
-		a.showError(fmt.Errorf("JSON должен быть массивом объектов: %w", err))
+		a.showError(fmt.Errorf(tr("JSON должен быть массивом объектов: %w"), err))
 		return
 	}
 	if len(objects) == 0 {
-		a.showError(fmt.Errorf("JSON не содержит строк"))
+		a.showError(fmt.Errorf("%s", tr("JSON не содержит строк")))
 		return
 	}
 
@@ -115,7 +115,7 @@ func (a *App) importJSON(path string) {
 		}
 	}
 	if len(names) == 0 {
-		a.showError(fmt.Errorf("в JSON нет колонок таблицы %s", a.data.obj.Name))
+		a.showError(fmt.Errorf(tr("в JSON нет колонок таблицы %s"), a.data.obj.Name))
 		return
 	}
 
@@ -142,12 +142,12 @@ func (a *App) importJSON(path string) {
 		a.showError(err)
 		return
 	}
-	a.data.notice = fmt.Sprintf("Импортировано строк: %d", count)
+	a.data.notice = trf("Импортировано строк: %d", count)
 	if err := a.data.Load(); err != nil {
 		a.showError(err)
 		return
 	}
-	a.showModal(fmt.Sprintf("Импортировано строк: %d", count), []string{"OK"}, nil)
+	a.showModal(trf("Импортировано строк: %d", count), []string{"OK"}, nil)
 }
 
 func jsonValue(v any) any {
@@ -182,11 +182,11 @@ func (a *App) exportSelectedRow(format string) {
 	}
 	rowID, ok := a.data.rowIDAtRow()
 	if !ok {
-		a.showError(fmt.Errorf("для этой таблицы нельзя определить rowid строки"))
+		a.showError(fmt.Errorf("%s", tr("для этой таблицы нельзя определить rowid строки")))
 		return
 	}
 	def := timestampName(a.data.obj.Name+"-row", "."+format)
-	a.pathDialog("Экспорт строки в "+strings.ToUpper(format), def, func(path string) {
+	a.pathDialog(trf("Экспорт строки в %s", strings.ToUpper(format)), def, func(path string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		raw, err := a.data.db.RawRowByID(ctx, a.data.obj.Name, a.data.cols, rowID)
@@ -208,6 +208,6 @@ func (a *App) exportSelectedRow(format string) {
 			a.showError(err)
 			return
 		}
-		a.showModal(fmt.Sprintf("Экспортировано строк: %d\n%s", n, path), []string{"OK"}, nil)
+		a.showModal(trf("Экспортировано строк: %d\n%s", n, path), []string{"OK"}, nil)
 	})
 }

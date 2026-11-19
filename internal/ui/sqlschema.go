@@ -29,7 +29,7 @@ func (a *App) createTableDialog() {
 	if a.current == nil {
 		return
 	}
-	tableName := tview.NewInputField().SetLabel("Таблица: ").SetLabelWidth(10)
+	tableName := tview.NewInputField().SetLabel(tr("Таблица: ")).SetLabelWidth(10)
 	nameField := tableName
 	nameField.SetLabelColor(colDialogTitle)
 	nameField.SetFieldBackgroundColor(colFieldBg)
@@ -38,7 +38,7 @@ func (a *App) createTableDialog() {
 	columnsLabel := tview.NewTextView()
 	columnsLabel.SetBackgroundColor(colDialogBg)
 	columnsLabel.SetTextColor(colDialogTitle)
-	columnsLabel.SetText("Колонки (Enter — загрузить в форму):")
+	columnsLabel.SetText(tr("Колонки (Enter — загрузить в форму):"))
 
 	columnsList := tview.NewList()
 	styleList(columnsList, colDialogBg, colDialogFg, colDialogDim)
@@ -46,15 +46,15 @@ func (a *App) createTableDialog() {
 	columnsList.SetTitle("")
 	columnsList.SetWrapAround(true)
 
-	colName := tview.NewInputField().SetLabel("Имя: ").SetLabelWidth(8)
-	colType := tview.NewDropDown().SetLabel("Тип: ").SetLabelWidth(6)
+	colName := tview.NewInputField().SetLabel(tr("Имя: ")).SetLabelWidth(8)
+	colType := tview.NewDropDown().SetLabel(tr("Тип: ")).SetLabelWidth(6)
 	colType.SetUseStyleTags(false)
 	colType.SetOptions(sqlColumnTypes, nil)
 	colType.SetCurrentOption(1)
 	pkCheck := tview.NewCheckbox().SetLabel("PK")
 	notNullCheck := tview.NewCheckbox().SetLabel("NOT NULL")
 	defaultField := tview.NewInputField().SetLabel("DEFAULT: ").SetLabelWidth(9)
-	defaultField.SetPlaceholder("SQL-выражение")
+	defaultField.SetPlaceholder(tr("SQL-выражение"))
 
 	for _, f := range []*tview.InputField{nameField, colName, defaultField} {
 		f.SetLabelColor(colDialogTitle)
@@ -84,7 +84,7 @@ func (a *App) createTableDialog() {
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]DEFAULT — SQL-выражение (0, 'x', CURRENT_TIMESTAMP) · Ctrl+S — создать")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("DEFAULT — SQL-выражение (0, 'x', CURRENT_TIMESTAMP) · Ctrl+S — создать"))
 
 	okBtn := dialogButton("OK", true, func() {})
 	cancelBtn := dialogButton("Отмена", false, a.closeDialog)
@@ -103,7 +103,7 @@ func (a *App) createTableDialog() {
 		pkCheck.SetChecked(false)
 		notNullCheck.SetChecked(false)
 		defaultField.SetText("")
-		addBtn.SetLabel("Добавить")
+		addBtn.SetLabel(tr("Добавить"))
 	}
 	renderColumns := func() {
 		columnsList.Clear()
@@ -132,12 +132,12 @@ func (a *App) createTableDialog() {
 		pkCheck.SetChecked(c.pk)
 		notNullCheck.SetChecked(c.notNull)
 		defaultField.SetText(c.def)
-		addBtn.SetLabel("Обновить")
+		addBtn.SetLabel(tr("Обновить"))
 	}
 	saveColumn := func() {
 		name := strings.TrimSpace(colName.GetText())
 		if name == "" {
-			hint.SetText("[red]Укажите имя колонки[-:-:-]")
+			hint.SetText("[red]" + tr("Укажите имя колонки") + "[-:-:-]")
 			return
 		}
 		typeIndex, typ := colType.GetCurrentOption()
@@ -158,14 +158,14 @@ func (a *App) createTableDialog() {
 		}
 		resetForm()
 		renderColumns()
-		hint.SetText("[" + colorName(colDialogDim) + "]Колонка добавлена · Ctrl+S — создать таблицу")
+		hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Колонка добавлена · Ctrl+S — создать таблицу"))
 		a.app.SetFocus(colName)
 	}
 	addBtn.SetSelectedFunc(saveColumn)
 	clearBtn.SetSelectedFunc(resetForm)
 	delBtn.SetSelectedFunc(func() {
 		if editing < 0 || editing >= len(columns) {
-			hint.SetText("[red]Выберите колонку для удаления[-:-:-]")
+			hint.SetText("[red]" + tr("Выберите колонку для удаления") + "[-:-:-]")
 			return
 		}
 		columns = append(columns[:editing], columns[editing+1:]...)
@@ -177,22 +177,22 @@ func (a *App) createTableDialog() {
 		name := strings.TrimSpace(nameField.GetText())
 		sqlText, err := buildCreateTableSQL(name, columns)
 		if err != nil {
-			hint.SetText("[red]" + esc(err.Error()) + "[-:-:-]")
+			hint.SetText("[red]" + esc(translateText(err.Error())) + "[-:-:-]")
 			return
 		}
 		if a.opts.ReadOnly {
-			hint.SetText("[red]База открыта в режиме только чтения. Переключите F8.[-:-:-]")
+			hint.SetText("[red]" + tr("База открыта в режиме только чтения. Переключите F8.") + "[-:-:-]")
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if _, err := a.current.Exec(ctx, sqlText, 0); err != nil {
-			hint.SetText("[red]Ошибка: " + esc(err.Error()) + "[-:-:-]")
+			hint.SetText("[red]" + tr("Ошибка: ") + esc(translateText(err.Error())) + "[-:-:-]")
 			return
 		}
 		a.closeDialog()
 		a.refreshObjectsSelect(name)
-		a.notify(fmt.Sprintf("Таблица %q создана", name))
+		a.notify(trf("Таблица %q создана", name))
 	}
 	okBtn.SetSelectedFunc(submit)
 	a.dialogSave = submit
@@ -330,7 +330,7 @@ func (a *App) createTableDialog() {
 		AddItem(nil, 1, 0, false).
 		AddItem(dialogButtonRow(okBtn, cancelBtn), 1, 0, false)
 
-	a.showFramedDialog("Создание таблицы", content, 80, 22, nameField)
+	a.showFramedDialog(tr("Создание таблицы"), content, 80, 22, nameField)
 	a.dialogEscape = func() bool { return colType.IsOpen() }
 }
 
@@ -346,10 +346,10 @@ func columnTypeIndex(typ string) int {
 func buildCreateTableSQL(name string, columns []tableColumnDef) (string, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return "", fmt.Errorf("укажите имя таблицы")
+		return "", fmt.Errorf("%s", tr("укажите имя таблицы"))
 	}
 	if len(columns) == 0 {
-		return "", fmt.Errorf("добавьте хотя бы одну колонку")
+		return "", fmt.Errorf("%s", tr("добавьте хотя бы одну колонку"))
 	}
 	var pkNames []string
 	for _, c := range columns {
@@ -382,7 +382,7 @@ func (a *App) createViewDialog() {
 	if a.current == nil {
 		return
 	}
-	nameField := tview.NewInputField().SetLabel("Имя: ").SetLabelWidth(10)
+	nameField := tview.NewInputField().SetLabel(tr("Имя: ")).SetLabelWidth(10)
 	nameField.SetLabelColor(colDialogTitle)
 	nameField.SetFieldBackgroundColor(colFieldBg)
 	nameField.SetFieldTextColor(colText)
@@ -398,7 +398,7 @@ func (a *App) createViewDialog() {
 	hint.SetBackgroundColor(colDialogBg)
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
-	hint.SetText("[" + colorName(colDialogDim) + "]CREATE VIEW имя AS <SELECT> · Ctrl+S — создать")
+	hint.SetText("[" + colorName(colDialogDim) + "]" + tr("CREATE VIEW имя AS <SELECT> · Ctrl+S — создать"))
 
 	var okBtn, cancelBtn *tview.Button
 	submit := func() {
@@ -406,27 +406,27 @@ func (a *App) createViewDialog() {
 		query := strings.TrimSpace(queryArea.GetText())
 		query = strings.TrimRight(query, "; \t\r\n")
 		if name == "" {
-			hint.SetText("[red]Укажите имя представления[-:-:-]")
+			hint.SetText("[red]" + tr("Укажите имя представления") + "[-:-:-]")
 			return
 		}
 		if query == "" {
-			hint.SetText("[red]Укажите SELECT-запрос[-:-:-]")
+			hint.SetText("[red]" + tr("Укажите SELECT-запрос") + "[-:-:-]")
 			return
 		}
 		if a.opts.ReadOnly {
-			hint.SetText("[red]База открыта в режиме только чтения. Переключите F8.[-:-:-]")
+			hint.SetText("[red]" + tr("База открыта в режиме только чтения. Переключите F8.") + "[-:-:-]")
 			return
 		}
 		sqlText := "CREATE VIEW " + db.QuoteIdent(name) + " AS " + query
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if _, err := a.current.Exec(ctx, sqlText, 0); err != nil {
-			hint.SetText("[red]Ошибка: " + esc(err.Error()) + "[-:-:-]")
+			hint.SetText("[red]" + tr("Ошибка: ") + esc(translateText(err.Error())) + "[-:-:-]")
 			return
 		}
 		a.closeDialog()
 		a.refreshObjectsSelect(name)
-		a.notify(fmt.Sprintf("Представление %q создано", name))
+		a.notify(trf("Представление %q создано", name))
 	}
 	okBtn = dialogButton("OK", true, submit)
 	cancelBtn = dialogButton("Отмена", false, a.closeDialog)
@@ -472,5 +472,5 @@ func (a *App) createViewDialog() {
 		AddItem(nil, 1, 0, false).
 		AddItem(dialogButtonRow(okBtn, cancelBtn), 1, 0, false)
 
-	a.showFramedDialog("Создание представления", content, 80, 20, nameField)
+	a.showFramedDialog(tr("Создание представления"), content, 80, 20, nameField)
 }

@@ -79,12 +79,12 @@ func (a *App) editCellDialog(p *DataPage, row, col int) {
 		p.saveCell(row, col, parseEditorValue(value))
 	}
 
-	title := fmt.Sprintf("Правка · %s.%s", p.obj.Name, column.Name)
+	title := trf("Правка · %s.%s", p.obj.Name, column.Name)
 	headText := fmt.Sprintf("[%s::b]%s.%s[-:-:-]", colorName(colDialogTitle), esc(p.obj.Name), esc(column.Name))
 	if column.Type != "" {
 		headText += fmt.Sprintf("  [%s][%s][-:-:-]", colorName(colDialogDim), esc(column.Type))
 	}
-	headText += fmt.Sprintf("  [%s]· строка %d[-:-:-]", colorName(colDialogDim), int64(p.offset)+int64(row-2)+1)
+	headText += fmt.Sprintf("  [%s]%s[-:-:-]", colorName(colDialogDim), trf("· строка %d", int64(p.offset)+int64(row-2)+1))
 	head := tview.NewTextView().SetDynamicColors(true)
 	head.SetBackgroundColor(colDialogBg)
 	head.SetTextColor(colDialogFg)
@@ -96,11 +96,11 @@ func (a *App) editCellDialog(p *DataPage, row, col int) {
 	hint.SetTextColor(colDialogDim)
 	hint.SetWrap(false)
 	if kind == cellEditorNumber {
-		hint.SetText("[" + colorName(colDialogDim) + "]Enter — сохранить · Esc — отмена · пусто — NULL")
+		hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Enter — сохранить · Esc — отмена · пусто — NULL"))
 	} else if kind == cellEditorText {
-		hint.SetText("[" + colorName(colDialogDim) + "]Ctrl+S — сохранить · Tab — кнопки · Esc — отмена · пусто — NULL")
+		hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Ctrl+S — сохранить · Tab — кнопки · Esc — отмена · пусто — NULL"))
 	} else {
-		hint.SetText("[" + colorName(colDialogDim) + "]Ctrl+S — сохранить · Tab — кнопки · Esc — отмена · пусто — NULL · x'ABCD' — BLOB")
+		hint.SetText("[" + colorName(colDialogDim) + "]" + tr("Ctrl+S — сохранить · Tab — кнопки · Esc — отмена · пусто — NULL · x'ABCD' — BLOB"))
 	}
 
 	var hashBtns []*tview.Button
@@ -109,7 +109,7 @@ func (a *App) editCellDialog(p *DataPage, row, col int) {
 		hashLabel := tview.NewTextView().SetDynamicColors(true)
 		hashLabel.SetBackgroundColor(colDialogBg)
 		hashLabel.SetTextColor(colDialogTitle)
-		hashLabel.SetText("Хеш: ")
+		hashLabel.SetText(tr("Хеш: "))
 		hashRow = tview.NewFlex().
 			AddItem(hashLabel, 6, 0, false)
 		for index, opt := range cellHashOptions {
@@ -120,7 +120,7 @@ func (a *App) editCellDialog(p *DataPage, row, col int) {
 			btn := dialogButton(opt.label, false, func() {
 				value, err := opt.hash(area.GetText())
 				if err != nil {
-					hint.SetText("[red]Ошибка: " + esc(err.Error()) + "[-:-:-]")
+					hint.SetText("[red]" + tr("Ошибка: ") + esc(translateText(err.Error())) + "[-:-:-]")
 					return
 				}
 				area.SetText(value, true)

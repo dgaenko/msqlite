@@ -64,7 +64,7 @@ func (p *SQLPage) build() {
 	p.table.SetSeparator(columnLineSeparator(p.app.colLines))
 	p.table.SetFixed(1, 1)
 	p.table.SetBorder(true)
-	p.table.SetTitle(" Результат ")
+	p.table.SetTitle(tr(" Результат "))
 	p.table.SetTitleColor(colTitle)
 	p.table.SetBorderColor(colBorder)
 	p.table.SetSelectable(true, true)
@@ -74,7 +74,7 @@ func (p *SQLPage) build() {
 	p.status.SetBackgroundColor(colBg)
 	p.status.SetWrap(false)
 	p.status.SetTextColor(colDim)
-	p.status.SetText("[silver]Введите SQL и нажмите Enter.[-:-:-]")
+	p.status.SetText("[silver]" + tr("Введите SQL и нажмите Enter.") + "[-:-:-]")
 
 	p.input = tview.NewTextArea()
 	p.input.SetLabel("SQL> ")
@@ -87,7 +87,7 @@ func (p *SQLPage) build() {
 	p.input.SetMaxLength(1 << 20)
 	p.input.SetBorder(true)
 	p.input.SetBorderColor(colBorder)
-	p.input.SetTitle(" Запрос ")
+	p.input.SetTitle(tr(" Запрос "))
 	p.input.SetTitleColor(colTitle)
 	p.input.SetFocusFunc(func() { p.focusGrid = false })
 	p.input.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
@@ -165,9 +165,9 @@ func (p *SQLPage) restyle() {
 
 func (p *SQLPage) updateMode() {
 	p.readOnly = p.app.opts.ReadOnly
-	mode := "чтение/запись"
+	mode := tr("чтение/запись")
 	if p.readOnly {
-		mode = "только чтение"
+		mode = tr("только чтение")
 	}
 	p.header.SetText(fmt.Sprintf("[yellow::b]SQL[-:-:-] [white]· %s  [gray::d]· %s",
 		esc(p.db.Name), mode))
@@ -184,7 +184,7 @@ func (p *SQLPage) execute() {
 	p.app.addSQLHistory(q)
 	p.historyIdx = len(p.app.sqlHistory)
 	p.completionCols = nil
-	p.status.SetText("[yellow]Выполняется… Esc — отмена[-:-:-]")
+	p.status.SetText("[yellow]" + tr("Выполняется… Esc — отмена") + "[-:-:-]")
 
 	p.running = true
 	p.canceled = false
@@ -205,9 +205,9 @@ func (p *SQLPage) execute() {
 			p.cancel = nil
 			if err != nil {
 				if p.canceled {
-					p.status.SetText("[yellow]Запрос отменён[-:-:-]")
+					p.status.SetText("[yellow]" + tr("Запрос отменён") + "[-:-:-]")
 				} else {
-					p.status.SetText("[red::b]Ошибка: [-:-:-]" + esc(err.Error()))
+					p.status.SetText("[red::b]" + tr("Ошибка: ") + "[-:-:-]" + esc(translateText(err.Error())))
 				}
 				p.canceled = false
 				p.app.app.SetFocus(p.input)
@@ -218,15 +218,15 @@ func (p *SQLPage) execute() {
 			p.input.SetText("", false)
 			if res.IsSelect {
 				p.populate(res)
-				msg := fmt.Sprintf("[green::b]OK[-:-:-] · строк: %d · %d мс",
+				msg := "[green::b]OK[-:-:-]" + trf(" · строк: %d · %d мс",
 					len(res.Rows), res.Duration.Milliseconds())
 				if res.Truncated {
-					msg += " · [yellow]показаны первые 1000[-:-:-]"
+					msg += "[yellow]" + tr(" · показаны первые 1000") + "[-:-:-]"
 				}
 				p.status.SetText(msg)
 			} else {
 				p.table.Clear()
-				p.status.SetText(fmt.Sprintf("[green::b]OK[-:-:-] · затронуто строк: %d · %d мс",
+				p.status.SetText("[green::b]OK[-:-:-]" + trf(" · затронуто строк: %d · %d мс",
 					res.Affected, res.Duration.Milliseconds()))
 				p.app.refreshObjects()
 			}
@@ -240,7 +240,7 @@ func (p *SQLPage) cancelQuery() {
 	if !p.running || p.cancel == nil {
 		return
 	}
-	p.status.SetText("[yellow]Отмена…[-:-:-]")
+	p.status.SetText("[yellow]" + tr("Отмена…") + "[-:-:-]")
 	p.canceled = true
 	p.cancel()
 }
@@ -579,7 +579,7 @@ func (p *SQLPage) complete() {
 	prefix := text[start:end]
 	candidates := p.completionCandidates(prefix, completionContext(text, start))
 	if len(candidates) == 0 {
-		p.status.SetText("[silver]Нет вариантов автодополнения[-:-:-]")
+		p.status.SetText("[silver]" + tr("Нет вариантов автодополнения") + "[-:-:-]")
 		return
 	}
 	candidate := candidates[0]
@@ -601,7 +601,7 @@ func (p *SQLPage) showCompletionStatus() {
 	if len(p.compCands) > 6 {
 		preview += " …"
 	}
-	p.status.SetText(fmt.Sprintf("[silver]Автодополнение (%d): %s[-:-:-]", len(p.compCands), esc(preview)))
+	p.status.SetText("[silver]" + trf("Автодополнение (%d): %s", len(p.compCands), esc(preview)) + "[-:-:-]")
 }
 
 func (p *SQLPage) resultRawRows() [][]any {
@@ -643,4 +643,13 @@ func (p *SQLPage) exportResultCSV(path string) (int64, error) {
 
 func (p *SQLPage) exportResultJSON(path string) (int64, error) {
 	return db.WriteJSON(path, p.resultColumnNames(), p.resultRawRows())
+}
+
+func (p *SQLPage) relocalize() {
+	p.table.SetTitle(tr(" Результат "))
+	p.input.SetTitle(tr(" Запрос "))
+	p.restyle()
+	if p.result == nil && !p.running {
+		p.status.SetText("[silver]" + tr("Введите SQL и нажмите Enter.") + "[-:-:-]")
+	}
 }
