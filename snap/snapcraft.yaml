@@ -1,0 +1,87 @@
+name: msqlite
+title: msqlite
+summary: TUI SQLite manager in Midnight Commander / Far style
+description: |
+  msqlite is a terminal (TUI) SQLite manager inspired by Midnight Commander
+  and Far Manager. It lets you browse databases, tables, views, schemas and
+  data, edit rows, and run SQL queries without leaving the terminal.
+
+  Features:
+    - file browser for SQLite databases (detected by the SQLite header)
+    - table/view list with row counts, schema, indexes, foreign keys, DDL
+    - paged data view with sorting and SQL filters
+    - cell editing, row insert/duplicate/delete
+    - multi-line SQL console with history and autocompletion
+    - CSV/JSON import and export, SQL dumps
+    - backup, VACUUM, ANALYZE and integrity checks
+    - three UI themes (Midnight Commander, DOS Navigator, DOS Navigator Blue)
+    - Russian and English interface
+
+  Works on Linux (amd64, arm64, armv7), including Raspberry Pi.
+  Binaries are static and have no external dependencies.
+
+  Upstream: https://github.com/dgaenko/msqlite
+adopt-info: msqlite
+license: MIT
+contact: https://github.com/dgaenko/msqlite/issues
+source-code: https://github.com/dgaenko/msqlite
+issues: https://github.com/dgaenko/msqlite/issues
+website: https://github.com/dgaenko/msqlite
+
+base: core22
+grade: stable
+
+# msqlite — файловый менеджер баз SQLite: он ходит по произвольным каталогам
+# (вплоть до /), открывает и изменяет файлы баз в любом месте файловой
+# системы и хранит настройки в ~/.config/msqlite. Строгое ограничение (strict)
+# не даёт такого доступа, поэтому используется classic confinement, как у
+# аналогичных TUI-менеджеров (mc, ranger). Публикация classic-снапов требует
+# отдельного ревью в Snap Store (см. https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/).
+confinement: classic
+
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: arm64
+    build-for: arm64
+  - build-on: armhf
+    build-for: armhf
+
+apps:
+  msqlite:
+    command: bin/msqlite
+
+parts:
+  msqlite:
+    plugin: nil
+    source: .
+    build-packages:
+      - git
+    build-snaps:
+      - go/1.22/stable
+    build-environment:
+      - CGO_ENABLED: "0"
+      - GOFLAGS: "-trimpath"
+      # Не даём Go скачивать другой toolchain: go.mod требует 1.22.2,
+      # а сборка идёт на go/1.22/stable.
+      - GOTOOLCHAIN: "local"
+    override-build: |
+      set -eu
+
+      VERSION="$(./scripts/version.sh version)"
+      COMMIT="$(./scripts/version.sh commit)"
+      BUILD_DATE="$(./scripts/version.sh date)"
+
+      mkdir -p "$CRAFT_PART_INSTALL/bin"
+      go build -buildvcs=false -trimpath \
+        -ldflags "-s -w -X main.version=$VERSION -X main.commit=$COMMIT -X main.buildDate=$BUILD_DATE" \
+        -o "$CRAFT_PART_INSTALL/bin/msqlite" .
+
+      # Версия снапа берётся из scripts/version.sh (VERSION + git-состояние).
+      # Snap Store принимает версию не длиннее 32 символов, поэтому
+      # отбрасываем semver build-metadata после "+" (там хеш коммита/dirty).
+      SNAP_VERSION="${VERSION%%+*}"
+      if [ "${#SNAP_VERSION}" -gt 32 ]; then
+        SNAP_VERSION="$(printf '%s' "$SNAP_VERSION" | cut -c1-32 | sed 's/[-.]$//')"
+      fi
+      snapcraftctl set-version "$SNAP_VERSION"

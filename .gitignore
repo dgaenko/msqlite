@@ -1,3 +1,10 @@
 bin/
 *.db-wal
 *.db-shm
+
+# Snapcraft
+/parts/
+/stage/
+/prime/
+/.snapcraft/
+*.snap
