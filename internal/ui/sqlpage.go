@@ -40,6 +40,7 @@ type SQLPage struct {
 	compText       string
 	compCands      []string
 	compIndex      int
+	search         string
 }
 
 func newSQLPage(a *App, d *db.Database, readOnly bool, initial string) *SQLPage {
@@ -205,7 +206,8 @@ func (p *SQLPage) execute() {
 				if p.canceled {
 					p.status.SetText("[yellow]" + tr("Запрос отменён") + "[-:-:-]")
 				} else {
-					p.status.SetText("[red::b]" + tr("Ошибка: ") + "[-:-:-]" + esc(translateText(err.Error())))
+					p.status.SetText("[red::b]" + tr("Ошибка: ") + "[-:-:-]" + esc(firstLine(formatDBError(err, q))))
+					p.app.showModal(tr("Ошибка")+":\n\n"+formatDBError(err, q), []string{"OK"}, nil)
 				}
 				p.canceled = false
 				p.app.app.SetFocus(p.input)
@@ -650,4 +652,34 @@ func (p *SQLPage) relocalize() {
 	if p.result == nil && !p.running {
 		p.status.SetText("[silver]" + tr("Введите SQL и нажмите Enter.") + "[-:-:-]")
 	}
+}
+
+func (p *SQLPage) findNext(query string) bool {
+	if p.result == nil || !p.result.IsSelect || len(p.result.Rows) == 0 || len(p.result.Columns) == 0 {
+		return false
+	}
+	q := strings.ToLower(query)
+	rows, cols := len(p.result.Rows), len(p.result.Columns)
+	sr, sc := p.table.GetSelection()
+	start := 0
+	if sr >= 1 && sc >= 1 {
+		start = (sr-1)*cols + (sc - 1)
+	}
+	total := rows * cols
+	for k := 1; k <= total; k++ {
+		idx := (start + k) % total
+		r, c := idx/cols, idx%cols
+		if strings.Contains(strings.ToLower(p.result.Rows[r][c].Text), q) {
+			p.table.Select(r+1, c+1)
+			p.focusGrid = true
+			p.app.app.SetFocus(p.table)
+			return true
+		}
+	}
+	return false
+}
+
+func (p *SQLPage) setFocusInput() {
+	p.focusGrid = false
+	p.app.app.SetFocus(p.input)
 }

@@ -25,12 +25,14 @@ const helpTextRU = `[yellow::b]Запуск[-:-:-]
   [white]F1[-:-:-]            эта справка
   [white]F10 / Alt+X[-:-:-]   выход (с подтверждением)
   [white]Ctrl+P[-:-:-]        действия: экспорт, импорт, обслуживание
+  [white]Alt+1…9 / Ctrl+Tab[-:-:-] переключение вкладок баз
   [white]Esc[-:-:-]           назад / подтверждение выхода
 
 [yellow::b]Данные[-:-:-]
   [white]Стрелки[-:-:-]       перемещение по ячейкам
   [white]Enter / F2[-:-:-]    редактировать ячейку / показать значение
   [white]Ctrl+S[-:-:-]        сохранить ячейку, Ins — вставить строку, Del — удалить
+  [white]Ctrl+Z / Ctrl+Y[-:-:-] отменить / повторить правку или удаление строки
   Редактор ячейки: число — компактное окно (Enter сохраняет), текст —
   большое, BLOB и прочие типы — максимальное (Ctrl+S сохраняет, Tab — кнопки).
   Для текста доступны хеши: MD5, SHA-1, SHA-256, SHA-512 и bcrypt.
@@ -40,6 +42,7 @@ const helpTextRU = `[yellow::b]Запуск[-:-:-]
   [white]F7 / PgUp[-:-:-]     предыдущая страница
   [white]PgDn[-:-:-]          следующая страница
   [white]PgUp / PgDn[-:-:-]   то же; Home/End — первая/последняя страница
+  [white]Ctrl+F[-:-:-]         поиск по текущей странице данных
   [white]s / клик по шапке[-:-:-] сортировка колонки: ASC → DESC → без сортировки
   [white]F5[-:-:-]            перечитать данные
   [white]Esc[-:-:-]           назад
@@ -58,6 +61,7 @@ const helpTextRU = `[yellow::b]Запуск[-:-:-]
   [white]Ctrl+Space[-:-:-]    то же автодополнение: SQL-команды, таблицы и поля
   [white]F6[-:-:-]            конструктор SELECT: таблица, колонки, WHERE, ORDER BY, LIMIT
   [white]Alt+↑ / Alt+↓[-:-:-] история запросов (сохраняется между запусками)
+  [white]Ctrl+F[-:-:-]         поиск в результате запроса
   [white]F2[-:-:-]            полное значение выбранной ячейки
   [white]Esc[-:-:-]            отменить выполняющийся запрос
   Выполняется одна инструкция за раз; SELECT показывает не более 1000 строк.
@@ -134,12 +138,14 @@ const helpTextEN = `[yellow::b]Startup[-:-:-]
   [white]F1[-:-:-]            this help
   [white]F10 / Alt+X[-:-:-]   exit (with confirmation)
   [white]Ctrl+P[-:-:-]        actions: export, import, maintenance
+  [white]Alt+1…9 / Ctrl+Tab[-:-:-] switch database tabs
   [white]Esc[-:-:-]           back / confirm exit
 
 [yellow::b]Data[-:-:-]
   [white]Arrows[-:-:-]        move between cells
   [white]Enter / F2[-:-:-]    edit a cell / show its value
   [white]Ctrl+S[-:-:-]        save the cell, Ins — insert a row, Del — delete
+  [white]Ctrl+Z / Ctrl+Y[-:-:-] undo / redo a cell edit or row deletion
   Cell editor: numbers — compact window (Enter saves), text —
   large, BLOB and other types — largest (Ctrl+S saves, Tab — buttons).
   Text values support hashes: MD5, SHA-1, SHA-256, SHA-512 and bcrypt.
@@ -149,6 +155,7 @@ const helpTextEN = `[yellow::b]Startup[-:-:-]
   [white]F7 / PgUp[-:-:-]     previous page
   [white]PgDn[-:-:-]          next page
   [white]PgUp / PgDn[-:-:-]   same; Home/End — first/last page
+  [white]Ctrl+F[-:-:-]         search the current data page
   [white]s / header click[-:-:-] sort column: ASC → DESC → unsorted
   [white]F5[-:-:-]            reload data
   [white]Esc[-:-:-]           back
@@ -167,6 +174,7 @@ const helpTextEN = `[yellow::b]Startup[-:-:-]
   [white]Ctrl+Space[-:-:-]    same autocomplete: SQL commands, tables and columns
   [white]F6[-:-:-]            SELECT builder: table, columns, WHERE, ORDER BY, LIMIT
   [white]Alt+↑ / Alt+↓[-:-:-] query history (persists between runs)
+  [white]Ctrl+F[-:-:-]         search the query result
   [white]F2[-:-:-]            full value of the selected cell
   [white]Esc[-:-:-]           cancel the running query
   One statement is executed at a time; SELECT shows at most 1000 rows.

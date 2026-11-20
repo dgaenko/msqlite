@@ -40,7 +40,8 @@ func (a *App) closeDialog() {
 }
 
 func modalTitle(text string, buttons []string) string {
-	if strings.HasPrefix(strings.TrimSpace(text), "Ошибка") {
+	trimmed := strings.TrimSpace(text)
+	if strings.HasPrefix(trimmed, "Ошибка") || strings.HasPrefix(trimmed, "Error") {
 		return "Ошибка"
 	}
 	for _, label := range buttons {
@@ -291,7 +292,7 @@ func (a *App) showError(err error) {
 	if err == nil {
 		return
 	}
-	a.showModal(tr("Ошибка")+":\n\n"+translateText(err.Error()), []string{"OK"}, nil)
+	a.showModal(tr("Ошибка")+":\n\n"+formatDBError(err, ""), []string{"OK"}, nil)
 }
 
 func (a *App) confirmQuit() {

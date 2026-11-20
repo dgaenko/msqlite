@@ -14,6 +14,7 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
 - Файловый браузер: папки и SQLite-файлы в текущем каталоге, вход в подпапки,
   подъём через `..` или `Backspace` вплоть до `/`.
 - Открытие базы аргументом (`msqlite file.db`) и список недавних баз.
+- Несколько баз одновременно во вкладках (`Alt+1…9`, `Ctrl+Tab`).
 - Список таблиц и представлений выбранной базы с числом строк (оценка `~N` из
   `sqlite_stat1`, для таблиц без статистики — точный `COUNT(*)`) и фильтром по
   имени (`/`).
@@ -21,10 +22,13 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
   первичные ключи, индексы, внешние ключи, триггеры и DDL; generated-колонки
   помечаются и доступны только для чтения.
 - Просмотр данных с постраничной навигацией, сортировкой, SQL-фильтром
-  и отключаемыми вертикальными разделителями колонок.
+  и отключаемыми вертикальными разделителями колонок; история фильтров и
+  сортировок.
 - Автообновление открытой базы при изменении файла извне: список таблиц,
   данные и структура перечитываются с сохранением курсора и страницы.
-- Редактирование ячеек, вставка и удаление строк (для обычных rowid-таблиц).
+- Редактирование ячеек, вставка и удаление строк (для обычных rowid-таблиц);
+  отмена и повтор правок/удалений (`Ctrl+Z` / `Ctrl+Y`).
+- Поиск по текущей странице данных и результату SQL (`Ctrl+F`).
 - Многострочная SQL-консоль с сохраняемой историей запросов, автодополнением
   (`Tab`/`Ctrl+Space`), подсветкой синтаксиса, конструктором запросов (`F6`),
   табличным результатом и отменой долгого запроса по `Esc`.
@@ -44,6 +48,9 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
 - Создание таблиц визуальным конструктором (колонки: тип, `PK`,
   `NOT NULL`, `DEFAULT`) и представлений; создание/удаление индексов,
   очистка и удаление таблиц.
+- Переход по внешним ключам из строки, создание и удаление триггеров.
+- Сохранённые SQL-запросы и конструктор SELECT.
+- Подробные ошибки SQLite: код, строка и колонка.
 - Режим «только чтение» по умолчанию; переключение на запись через `F8`.
 - Определение баз по заголовку SQLite, а не по расширению файла.
 - Сплеш-экран с авторами при запуске (закрывается через 3 секунды или любой
@@ -161,6 +168,11 @@ msqlite -rw             # сразу с правами записи
 msqlite -page 50        # размер страницы данных (по умолчанию 100)
 msqlite -no-splash      # не показывать сплэш при запуске
 msqlite -version
+
+# без интерфейса
+msqlite -exec "SELECT * FROM users;" file.db
+msqlite -csv -exec "SELECT id, name FROM users;" file.db
+msqlite -dump file.db > backup.sql
 ```
 
 При старте показываются папки и SQLite-файлы выбранного каталога.
@@ -184,6 +196,7 @@ msqlite -version
 | `F8` | переключить режим чтение / запись |
 | `F9` | верхнее меню: Файл, База, Данные, SQL, Интерфейс, Справка |
 | `Ctrl+P` | быстрая палитра действий |
+| `Alt+1…9` / `Ctrl+Tab` | переключение вкладок баз |
 | `F10`, `Alt+X` | выход (с подтверждением) |
 | `Esc` | выход с подтверждением (на подэкранах — назад) |
 
@@ -194,6 +207,7 @@ msqlite -version
 | стрелки | перемещение по ячейкам |
 | `Enter`, `F2` | редактировать ячейку / показать значение |
 | `Ctrl+S` | сохранить ячейку |
+| `Ctrl+Z` / `Ctrl+Y` | отменить / повторить правку или удаление строки |
 | `Ins` | вставить строку |
 | `Del` | удалить строку (с подтверждением) |
 | `F6` | фильтр: конструктор `WHERE` (колонка, оператор, значение) или ручной ввод; пусто сбрасывает фильтр |
@@ -203,6 +217,7 @@ msqlite -version
 | `Home` / `End` | первая / последняя страница |
 | `s` / клик по заголовку | сортировка колонки: ASC → DESC → без сортировки |
 | `F3` | структура таблицы |
+| `Ctrl+F` | поиск по текущей странице данных |
 | `F5` | перечитать данные |
 | `Esc` | назад |
 
@@ -236,6 +251,7 @@ msqlite -version
 | `F6` | конструктор SELECT: таблица, колонки, `WHERE`, `ORDER BY`, `LIMIT` |
 | `F2` | полное значение выбранной ячейки |
 | `Alt+↑` / `Alt+↓` | история запросов (сохраняется между запусками) |
+| `Ctrl+F` | поиск в результате запроса |
 | `F8` | переключить режим чтение / запись |
 | `F9` | верхнее меню действий |
 | `Esc` | отменить выполняющийся запрос, иначе назад |
@@ -256,6 +272,7 @@ msqlite -version
   DOS Navigator Blue, языка (Русский / English) и размера страницы данных.
   Текущий выбор отмечен галочкой.
 - «О программе» в разделе «Справка» — повторный показ сплеша.
+- Вкладки баз: открытие в новой вкладке, переключение и закрытие.
 - Экспорт текущей таблицы (все строки), страницы, выбранной строки или
   результата SQL в CSV/JSON.
 - Импорт CSV (заголовок распознаётся автоматически) и JSON (массив объектов)
@@ -421,16 +438,19 @@ are static and have no external dependencies.
   subdirectories, go up via `..` or `Backspace` all the way to `/`.
 - Open a database via an argument (`msqlite file.db`) and a recent databases
   list.
+- Multiple databases open in tabs (`Alt+1…9`, `Ctrl+Tab`).
 - Table and view list for the selected database with row counts (estimate `~N`
   from `sqlite_stat1`, exact `COUNT(*)` for tables without statistics) and a
   name filter (`/`).
 - Object schema: columns, types, `NOT NULL`, defaults, primary keys, indexes,
   foreign keys, triggers and DDL; generated columns are marked and read-only.
 - Data browsing with pagination, sorting, SQL filter and toggleable vertical
-  column separators.
+  column separators; filter and sort history.
 - Auto-refresh of the open database when the file changes externally: the table
   list, data and schema are reloaded while preserving the cursor and page.
-- Cell editing, row insert and delete (for regular rowid tables).
+- Cell editing, row insert and delete (for regular rowid tables); undo/redo
+  (`Ctrl+Z` / `Ctrl+Y`).
+- Search the current data page and SQL result (`Ctrl+F`).
 - Multi-line SQL console with persistent query history, autocomplete
   (`Tab`/`Ctrl+Space`), syntax highlighting, a query builder (`F6`), tabular
   results and cancellation of long queries with `Esc`.
@@ -448,6 +468,9 @@ are static and have no external dependencies.
 - View BLOBs in hex and save BLOBs to a file.
 - Create tables with a visual builder (columns: type, `PK`, `NOT NULL`,
   `DEFAULT`) and views; create/drop indexes, clear and drop tables.
+- Follow foreign keys from a row; create and drop triggers.
+- Saved SQL queries and the SELECT builder.
+- Detailed SQLite errors: code, line and column.
 - Read-only mode by default; switch to write mode with `F8`.
 - Detect databases by their SQLite header rather than the file extension.
 - Splash screen with the authors on startup (closes after 3 seconds or any key;
@@ -565,6 +588,11 @@ msqlite -rw             # start in write mode
 msqlite -page 50        # data page size (default 100)
 msqlite -no-splash      # do not show the splash screen
 msqlite -version
+
+# non-interactive
+msqlite -exec "SELECT * FROM users;" file.db
+msqlite -csv -exec "SELECT id, name FROM users;" file.db
+msqlite -dump file.db > backup.sql
 ```
 
 On startup, folders and SQLite files in the selected directory are shown. The
@@ -588,6 +616,7 @@ current mode is displayed in the header.
 | `F8` | toggle read / write mode |
 | `F9` | top menu: File, Database, Data, SQL, Interface, Help |
 | `Ctrl+P` | quick action palette |
+| `Alt+1…9` / `Ctrl+Tab` | switch database tabs |
 | `F10`, `Alt+X` | exit (with confirmation) |
 | `Esc` | exit with confirmation (back on sub-screens) |
 
@@ -598,6 +627,7 @@ current mode is displayed in the header.
 | arrows | move between cells |
 | `Enter`, `F2` | edit a cell / show its value |
 | `Ctrl+S` | save the cell |
+| `Ctrl+Z` / `Ctrl+Y` | undo / redo a cell edit or row deletion |
 | `Ins` | insert a row |
 | `Del` | delete a row (with confirmation) |
 | `F6` | filter: `WHERE` builder (column, operator, value) or manual input; empty resets the filter |
@@ -607,6 +637,7 @@ current mode is displayed in the header.
 | `Home` / `End` | first / last page |
 | `s` / header click | sort a column: ASC → DESC → unsorted |
 | `F3` | table schema |
+| `Ctrl+F` | search the current data page |
 | `F5` | reload data |
 | `Esc` | back |
 
@@ -640,6 +671,7 @@ done through the SQL console.
 | `F6` | SELECT builder: table, columns, `WHERE`, `ORDER BY`, `LIMIT` |
 | `F2` | full value of the selected cell |
 | `Alt+↑` / `Alt+↓` | query history (persists between runs) |
+| `Ctrl+F` | search the query result |
 | `F8` | toggle read / write mode |
 | `F9` | top action menu |
 | `Esc` | cancel the running query, otherwise back |
@@ -660,6 +692,7 @@ select items with `↑`/`↓`, execute with `Enter`, close with `Esc`. Sections:
   Blue theme, the language (Russian / English) and the data page size. The
   current choice is checked.
 - "About" in the "Help" section — show the splash screen again.
+- Database tabs: open in a new tab, switch and close tabs.
 - Export the current table (all rows), page, selected row or SQL result to
   CSV/JSON.
 - Import CSV (the header is detected automatically) and JSON (array of objects)

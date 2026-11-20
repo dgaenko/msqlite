@@ -91,14 +91,14 @@ func (a *App) closeDatabase() {
 	if a.watcher != nil {
 		a.watcher.Unwatch()
 	}
-	if a.current != nil {
-		a.current.Close()
-		a.current = nil
-	}
+	a.closeAllTabs()
+	a.current = nil
 	a.objects = nil
 	a.visible = nil
 	a.objCounts = nil
 	a.objFilter = ""
+	a.undoStack = nil
+	a.redoStack = nil
 }
 
 func (a *App) clearTables(msg string) {

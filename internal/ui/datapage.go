@@ -31,6 +31,7 @@ type DataPage struct {
 	canEdit bool
 	err     error
 	notice  string
+	search  string
 
 	root    *tview.Flex
 	header  *tview.TextView
@@ -489,10 +490,24 @@ func (p *DataPage) saveCell(row, col int, value any) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if _, err := p.db.UpdateCell(ctx, p.obj.Name, p.cols[col-1].Name, value, rowID); err != nil {
+	raw, err := p.db.RawRowByID(ctx, p.obj.Name, p.cols, rowID)
+	if err != nil {
 		p.app.showError(err)
 		return
 	}
+	colName := p.cols[col-1].Name
+	oldVal := any(nil)
+	for i, c := range p.cols {
+		if c.Name == colName && i < len(raw) {
+			oldVal = raw[i]
+			break
+		}
+	}
+	if _, err := p.db.UpdateCell(ctx, p.obj.Name, colName, value, rowID); err != nil {
+		p.app.showError(err)
+		return
+	}
+	p.app.recordUndo(undoOp{kind: undoCell, table: p.obj.Name, column: colName, rowID: rowID, oldVal: oldVal, newVal: value})
 	if err := p.Load(); err != nil {
 		p.app.showError(err)
 		return
@@ -530,6 +545,11 @@ func (p *DataPage) deleteSelectedRow() {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
+		raw, err := p.db.RawRowByID(ctx, p.obj.Name, p.cols, rowID)
+		if err != nil {
+			p.app.showError(err)
+			return
+		}
 		n, err := p.db.DeleteRow(ctx, p.obj.Name, rowID)
 		if err != nil {
 			p.app.showError(err)
@@ -539,6 +559,7 @@ func (p *DataPage) deleteSelectedRow() {
 			p.app.showError(fmt.Errorf("%s", tr("строка не найдена")))
 			return
 		}
+		p.app.recordUndo(undoOp{kind: undoDelete, table: p.obj.Name, rowID: rowID, cols: append([]db.Column(nil), p.cols...), vals: raw})
 		if err := p.Load(); err != nil {
 			p.app.showError(err)
 			return
@@ -624,6 +645,9 @@ func (p *DataPage) toggleSort(idx int) {
 	}
 	p.offset = 0
 	p.selRow = 0
+	if p.order >= 0 {
+		p.app.rememberSort(p.obj.Name, p.cols[p.order].Name, p.desc)
+	}
 	p.Load()
 }
 
@@ -685,6 +709,9 @@ func (p *DataPage) applyFilter(filter string) {
 	p.filter = filter
 	p.offset = 0
 	p.selRow = 0
+	if filter != "" {
+		p.app.rememberFilter(p.obj.Name, filter)
+	}
 	if err := p.Load(); err != nil {
 		p.app.showError(err)
 	}
@@ -812,4 +839,28 @@ func (p *DataPage) duplicateSelectedRow() {
 func (p *DataPage) relocalize() {
 	p.table.SetTitle(tr(" Данные "))
 	p.restyle()
+}
+
+func (p *DataPage) findNext(query string) bool {
+	if len(p.rows) == 0 || len(p.cols) == 0 {
+		return false
+	}
+	q := strings.ToLower(query)
+	rows, cols := len(p.rows), len(p.cols)
+	sr, sc := p.table.GetSelection()
+	start := 0
+	if sr >= 2 && sc >= 1 {
+		start = (sr-2)*cols + (sc - 1)
+	}
+	total := rows * cols
+	for k := 1; k <= total; k++ {
+		idx := (start + k) % total
+		r, c := idx/cols, idx%cols
+		if strings.Contains(strings.ToLower(p.rows[r][c].Text), q) {
+			p.table.Select(r+2, c+1)
+			p.selRow, p.selCol = r, c+1
+			return true
+		}
+	}
+	return false
 }

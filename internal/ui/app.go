@@ -89,6 +89,15 @@ type App struct {
 	rememberDir  bool
 	noticeTimer  *time.Timer
 	noticeGen    int
+	undoStack    []undoOp
+	redoStack    []undoOp
+
+	filterHistory []filterEntry
+	sortHistory   []sortEntry
+	savedQueries  []savedQuery
+
+	tabs     []*dbTab
+	tabIndex int
 
 	splashActive bool
 	splashText   *tview.TextView
@@ -143,7 +152,9 @@ func Run(opts Options) error {
 	if opts.OpenPath != "" && !db.IsSQLiteFile(opts.OpenPath) {
 		return fmt.Errorf(tr("%s: не является файлом SQLite"), opts.OpenPath)
 	}
-	a := &App{opts: opts, dir: dir, colLines: true, rememberDir: rememberDir, sqlHistory: settings.SQLHistory}
+	a := &App{opts: opts, dir: dir, colLines: true, rememberDir: rememberDir, sqlHistory: settings.SQLHistory,
+		filterHistory: settings.FilterHistory, sortHistory: settings.SortHistory, savedQueries: settings.SavedQueries,
+		tabIndex: -1}
 	if len(a.sqlHistory) > 200 {
 		a.sqlHistory = a.sqlHistory[len(a.sqlHistory)-200:]
 	}
@@ -179,9 +190,7 @@ func Run(opts Options) error {
 	if a.splashTimer != nil {
 		a.splashTimer.Stop()
 	}
-	if a.current != nil {
-		a.current.Close()
-	}
+	a.closeAllTabs()
 	return err
 }
 
@@ -355,6 +364,10 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 		a.updateMainStatus()
 		return nil
 	}
+	if i := a.tabIndexForPath(e.path); i >= 0 {
+		a.switchTab(i)
+		return nil
+	}
 	if a.current == nil || a.current.Path != e.path {
 		a.objFilter = ""
 	}
@@ -366,15 +379,9 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 		}
 	}
 
-	if a.current != nil {
-		a.current.Close()
-		a.current = nil
-	}
-	a.objects = nil
-
+	a.saveActiveTab()
 	d, err := db.Open(e.path, a.opts.ReadOnly)
 	if err != nil {
-		a.closeDatabase()
 		a.clearTables(tr("(ошибка открытия)"))
 		a.setMainStatus(tr("Ошибка: ") + translateText(err.Error()))
 		a.updateHeader()
@@ -388,7 +395,6 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 	objs, err := d.Objects(ctx)
 	if err != nil {
 		d.Close()
-		a.closeDatabase()
 		a.clearTables(tr("(ошибка открытия)"))
 		a.setMainStatus(tr("Ошибка: ") + translateText(err.Error()))
 		a.updateHeader()
@@ -396,6 +402,16 @@ func (a *App) previewDatabase(index int, showErr, force bool) error {
 			a.showError(err)
 		}
 		return err
+	}
+	tab := &dbTab{path: e.path, db: d, objects: objs}
+	if a.tabIndex >= 0 && a.tabIndex < len(a.tabs) {
+		if old := a.tabs[a.tabIndex]; old != nil && old.db != nil {
+			old.db.Close()
+		}
+		a.tabs[a.tabIndex] = tab
+	} else {
+		a.tabs = append(a.tabs, tab)
+		a.tabIndex = len(a.tabs) - 1
 	}
 	a.current = d
 	a.objects = objs
@@ -574,6 +590,9 @@ func (a *App) updateHeader() {
 	if a.current != nil {
 		line += fmt.Sprintf("  [gray::d]· %s", esc(a.current.Name))
 	}
+	if bar := a.tabBar(); bar != "" {
+		line += "  [gray::d]· " + esc(bar)
+	}
 	a.mainHeader.SetText(line)
 }
 
@@ -644,7 +663,16 @@ func (a *App) onKey(ev *tcell.EventKey) *tcell.EventKey {
 			}
 			a.confirmQuit()
 			return nil
+		case '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			if !a.splashActive && !a.dialogOpen {
+				a.switchTab(int(ev.Rune() - '1'))
+				return nil
+			}
 		}
+	}
+	if ev.Key() == tcell.KeyTab && ev.Modifiers()&tcell.ModCtrl != 0 && !a.dialogOpen && !a.splashActive {
+		a.nextTab()
+		return nil
 	}
 	if ev.Key() == tcell.KeyCtrlP && !a.splashActive && !a.dialogOpen {
 		a.openPalette()
@@ -703,6 +731,18 @@ func (a *App) onKey(ev *tcell.EventKey) *tcell.EventKey {
 	}
 	if ev.Key() == tcell.KeyRune && ev.Rune() == '/' && a.currentPage == pageMain && a.focus == 1 {
 		a.openObjectFilter()
+		return nil
+	}
+	if ev.Key() == tcell.KeyCtrlF && (a.currentPage == pageData || a.currentPage == pageSQL) {
+		a.openSearch()
+		return nil
+	}
+	if ev.Key() == tcell.KeyCtrlZ && a.currentPage == pageData {
+		a.undoLast()
+		return nil
+	}
+	if ev.Key() == tcell.KeyCtrlY && a.currentPage == pageData {
+		a.redoLast()
 		return nil
 	}
 
@@ -795,6 +835,10 @@ func (a *App) selectedObject() *db.Object {
 }
 
 func (a *App) openData(o db.Object) {
+	a.openDataFilter(o, "")
+}
+
+func (a *App) openDataFilter(o db.Object, filter string) {
 	if a.current == nil {
 		return
 	}
@@ -806,6 +850,7 @@ func (a *App) openData(o db.Object) {
 		return
 	}
 	dp := newDataPage(a, a.current, o, cols, a.opts.PageSize)
+	dp.filter = filter
 	a.data = dp
 	a.openPage(pageData, dp.Root())
 	if err := dp.Load(); err != nil {
@@ -1169,4 +1214,44 @@ func findObject(objs []db.Object, name string) *db.Object {
 		}
 	}
 	return nil
+}
+
+// openSearch asks for a query and jumps to the next match in the current view.
+func (a *App) openSearch() {
+	if a.currentPage == pageData && a.data == nil {
+		return
+	}
+	if a.currentPage == pageSQL && a.sql == nil {
+		return
+	}
+	last := ""
+	if a.data != nil {
+		last = a.data.search
+	}
+	if a.sql != nil && a.sql.search != "" {
+		last = a.sql.search
+	}
+	a.inputDialog(tr("Поиск"), tr("Найти: "), last,
+		tr("Enter — найти · Esc — отмена"), func(value string) {
+			q := strings.TrimSpace(value)
+			if q == "" {
+				return
+			}
+			switch a.currentPage {
+			case pageData:
+				if a.data != nil {
+					a.data.search = q
+					if !a.data.findNext(q) {
+						a.notify(trf("Не найдено: %s", q))
+					}
+				}
+			case pageSQL:
+				if a.sql != nil {
+					a.sql.search = q
+					if !a.sql.findNext(q) {
+						a.notify(trf("Не найдено: %s", q))
+					}
+				}
+			}
+		})
 }

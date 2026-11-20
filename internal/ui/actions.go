@@ -374,10 +374,17 @@ func (tm *topMenu) handleKey(ev *tcell.EventKey) {
 func (a *App) menuCategories() []menuCategory {
 	file := menuCategory{title: tr("Файл"), actions: []paletteAction{
 		{tr("Открыть файл или каталог…"), a.openPathDialog},
+		{tr("Открыть в новой вкладке…"), a.openTabDialog},
 		{tr("Создать базу данных…"), a.createDatabaseDialog},
 		{tr("Недавние базы…"), a.openRecentDialog},
 		{tr("Выход…"), a.confirmQuit},
 	}}
+	if len(a.tabs) > 1 {
+		file.actions = append(file.actions,
+			paletteAction{tr("Следующая вкладка"), a.nextTab},
+			paletteAction{tr("Закрыть вкладку"), a.closeActiveTab},
+		)
+	}
 	categories := []menuCategory{file}
 
 	if a.current != nil {
@@ -397,11 +404,17 @@ func (a *App) menuCategories() []menuCategory {
 			{tr("Посчитать строки точно"), a.computeExactCounts},
 			{tr("Создать таблицу…"), a.createTableDialog},
 			{tr("Создать представление…"), a.createViewDialog},
+			{tr("Обзор схемы…"), a.openSchemaOverview},
 		}})
 	}
 
 	if a.data != nil && a.currentPage == pageData {
 		actions := []paletteAction{
+			{tr("Отменить изменение"), a.undoLast},
+			{tr("Повторить изменение"), a.redoLast},
+			{tr("История фильтров…"), a.openFilterHistory},
+			{tr("История сортировок…"), a.openSortHistory},
+			{tr("Перейти по внешнему ключу…"), a.openForeignKey},
 			{tr("Экспорт таблицы в CSV…"), func() { a.exportTable("csv") }},
 			{tr("Экспорт таблицы в JSON…"), func() { a.exportTable("json") }},
 			{tr("Экспорт страницы в CSV…"), func() { a.exportPage("csv") }},
@@ -413,6 +426,7 @@ func (a *App) menuCategories() []menuCategory {
 			{tr("Показать BLOB (hex)"), a.showSelectedBlob},
 			{tr("Сохранить BLOB в файл…"), a.saveSelectedBlob},
 			{tr("Структура таблицы"), func() { a.openStructure(a.data.obj) }},
+			{tr("Поиск…"), a.openSearch},
 		}
 		if a.data.canEdit {
 			actions = append(actions,
@@ -435,15 +449,22 @@ func (a *App) menuCategories() []menuCategory {
 	if a.currentPage == pageStructure && a.structure != nil {
 		categories = append(categories, menuCategory{title: tr("Структура"), actions: []paletteAction{
 			{tr("Редактировать структуру…"), a.structure.openEditor},
+			{tr("Создать триггер…"), a.createTrigger},
+			{tr("Удалить триггер…"), a.dropTriggerDialog},
 		}})
 	}
 
 	if a.current != nil {
 		actions := []paletteAction{
 			{tr("SQL-консоль"), a.openSQL},
+			{tr("Поиск…"), a.openSearch},
 		}
 		if a.currentPage == pageSQL && a.sql != nil {
-			actions = append(actions, paletteAction{tr("Конструктор запроса…"), a.sql.openQueryBuilder})
+			actions = append(actions,
+				paletteAction{tr("Конструктор запроса…"), a.sql.openQueryBuilder},
+				paletteAction{tr("Сохранить запрос…"), a.saveQueryDialog},
+				paletteAction{tr("Сохранённые запросы…"), a.openSavedQueries},
+			)
 		}
 		if a.currentPage == pageSQL && a.sql != nil && a.sql.result != nil && a.sql.result.IsSelect {
 			actions = append(actions,
@@ -1071,4 +1092,411 @@ func hexDump(data []byte) string {
 		b.WriteString(tr("\n... показаны первые 64 KiB\n"))
 	}
 	return b.String()
+}
+
+func (a *App) rememberFilter(table, filter string) {
+	entry := filterEntry{Table: table, Filter: filter}
+	out := []filterEntry{entry}
+	for _, e := range a.filterHistory {
+		if e.Table == table && e.Filter == filter {
+			continue
+		}
+		out = append(out, e)
+		if len(out) >= 30 {
+			break
+		}
+	}
+	a.filterHistory = out
+	a.persistSettings()
+}
+
+func (a *App) rememberSort(table, column string, desc bool) {
+	entry := sortEntry{Table: table, Column: column, Desc: desc}
+	out := []sortEntry{entry}
+	for _, e := range a.sortHistory {
+		if e.Table == table && e.Column == column && e.Desc == desc {
+			continue
+		}
+		out = append(out, e)
+		if len(out) >= 30 {
+			break
+		}
+	}
+	a.sortHistory = out
+	a.persistSettings()
+}
+
+func (a *App) openFilterHistory() {
+	if a.data == nil {
+		a.showModal(tr("Сначала откройте таблицу."), []string{"OK"}, nil)
+		return
+	}
+	var entries []filterEntry
+	for _, e := range a.filterHistory {
+		if e.Table == a.data.obj.Name {
+			entries = append(entries, e)
+		}
+	}
+	if len(entries) == 0 {
+		a.showModal(tr("История фильтров пуста."), []string{"OK"}, nil)
+		return
+	}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	for _, e := range entries {
+		list.AddItem(" "+e.Filter+" ", "", 0, nil)
+	}
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(entries) {
+			return
+		}
+		filter := entries[i].Filter
+		a.closeDialog()
+		a.data.applyFilter(filter)
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("История фильтров"), 72, list, choose)
+}
+
+func (a *App) openSortHistory() {
+	if a.data == nil {
+		a.showModal(tr("Сначала откройте таблицу."), []string{"OK"}, nil)
+		return
+	}
+	var entries []sortEntry
+	for _, e := range a.sortHistory {
+		if e.Table == a.data.obj.Name {
+			entries = append(entries, e)
+		}
+	}
+	if len(entries) == 0 {
+		a.showModal(tr("История сортировок пуста."), []string{"OK"}, nil)
+		return
+	}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	for _, e := range entries {
+		dir := "ASC"
+		if e.Desc {
+			dir = "DESC"
+		}
+		list.AddItem(" "+e.Column+" "+dir+" ", "", 0, nil)
+	}
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(entries) {
+			return
+		}
+		entry := entries[i]
+		a.closeDialog()
+		idx := -1
+		for j, c := range a.data.cols {
+			if c.Name == entry.Column {
+				idx = j
+				break
+			}
+		}
+		if idx < 0 {
+			a.notify(tr("Колонка не найдена"))
+			return
+		}
+		a.data.order = idx
+		a.data.desc = entry.Desc
+		a.data.offset = 0
+		a.data.Load()
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("История сортировок"), 64, list, choose)
+}
+
+func (a *App) saveQueryDialog() {
+	if a.sql == nil {
+		return
+	}
+	sqlText := strings.TrimSpace(a.sql.input.GetText())
+	if sqlText == "" {
+		a.notify(tr("Запрос пуст"))
+		return
+	}
+	a.inputDialog(tr("Сохранить запрос"), tr("Имя: "), "", tr("Enter — сохранить · Esc — отмена"), func(value string) {
+		name := strings.TrimSpace(value)
+		if name == "" {
+			name = fmt.Sprintf("Query %d", len(a.savedQueries)+1)
+		}
+		out := []savedQuery{{Name: name, SQL: sqlText}}
+		for _, q := range a.savedQueries {
+			if q.Name != name {
+				out = append(out, q)
+			}
+		}
+		if len(out) > 100 {
+			out = out[:100]
+		}
+		a.savedQueries = out
+		a.persistSettings()
+		a.notify(tr("Запрос сохранён"))
+	})
+}
+
+func (a *App) openSavedQueries() {
+	if a.sql == nil {
+		return
+	}
+	if len(a.savedQueries) == 0 {
+		a.showModal(tr("Сохранённых запросов нет."), []string{"OK"}, nil)
+		return
+	}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	for _, q := range a.savedQueries {
+		list.AddItem(" "+q.Name+" ", "", 0, nil)
+	}
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(a.savedQueries) {
+			return
+		}
+		sqlText := a.savedQueries[i].SQL
+		a.closeDialog()
+		a.sql.input.SetText(sqlText, true)
+		a.sql.setFocusInput()
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("Сохранённые запросы"), 72, list, choose)
+}
+
+func (a *App) currentObject() *db.Object {
+	if a.data != nil {
+		o := a.data.obj
+		return &o
+	}
+	if a.structure != nil {
+		o := a.structure.obj
+		return &o
+	}
+	return nil
+}
+
+func (a *App) openForeignKey() {
+	if a.data == nil || a.current == nil {
+		return
+	}
+	row, _ := a.data.table.GetSelection()
+	rowID, ok := a.data.rowIDAt(row)
+	if !ok {
+		a.notify(tr("Строка не выбрана"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	raw, err := a.data.db.RawRowByID(ctx, a.data.obj.Name, a.data.cols, rowID)
+	if err != nil {
+		a.showError(err)
+		return
+	}
+	fks, err := a.data.db.ForeignKeys(ctx, a.data.obj.Name)
+	if err != nil {
+		a.showError(err)
+		return
+	}
+	type target struct {
+		table  string
+		column string
+		value  any
+		label  string
+	}
+	var targets []target
+	for _, fk := range fks {
+		idx := -1
+		for i, c := range a.data.cols {
+			if c.Name == fk.From {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 || idx >= len(raw) || raw[idx] == nil {
+			continue
+		}
+		to := fk.To
+		if to == "" {
+			ocols, err := a.data.db.Columns(ctx, fk.Table)
+			if err != nil {
+				continue
+			}
+			for _, c := range ocols {
+				if c.PK > 0 {
+					to = c.Name
+					break
+				}
+			}
+		}
+		if to == "" {
+			continue
+		}
+		targets = append(targets, target{
+			table: fk.Table, column: to, value: raw[idx],
+			label: fk.From + " → " + fk.Table + "." + to + " = " + fmt.Sprint(raw[idx]),
+		})
+	}
+	if len(targets) == 0 {
+		a.showModal(tr("У выбранной строки нет заполненных внешних ключей."), []string{"OK"}, nil)
+		return
+	}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	for _, t := range targets {
+		list.AddItem(" "+t.label+" ", "", 0, nil)
+	}
+	choose := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(targets) {
+			return
+		}
+		t := targets[i]
+		a.closeDialog()
+		var obj *db.Object
+		for j := range a.objects {
+			if a.objects[j].Name == t.table {
+				obj = &a.objects[j]
+				break
+			}
+		}
+		if obj == nil {
+			a.notify(tr("Таблица не найдена"))
+			return
+		}
+		lit := sqlValueLiteral(t.value)
+		a.openDataFilter(*obj, db.QuoteIdent(t.column)+" = "+lit)
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { choose() })
+	a.showListDialog(tr("Внешние ключи"), 72, list, choose)
+}
+
+func sqlValueLiteral(v any) string {
+	switch x := v.(type) {
+	case nil:
+		return "NULL"
+	case string:
+		return "'" + strings.ReplaceAll(x, "'", "''") + "'"
+	case []byte:
+		return "X'" + strings.ToUpper(fmt.Sprintf("%x", x)) + "'"
+	case bool:
+		if x {
+			return "1"
+		}
+		return "0"
+	case time.Time:
+		return "'" + x.Format(time.RFC3339) + "'"
+	default:
+		return fmt.Sprint(x)
+	}
+}
+
+func (a *App) createTrigger() {
+	o := a.currentObject()
+	if o == nil {
+		return
+	}
+	tpl := "CREATE TRIGGER trigger_name\nAFTER INSERT ON " + db.QuoteIdent(o.Name) + "\nBEGIN\n    -- statements\nEND;"
+	a.openSQLWith(tpl)
+}
+
+func (a *App) dropTriggerDialog() {
+	o := a.currentObject()
+	if o == nil || a.current == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	triggers, err := a.current.Triggers(ctx, o.Name)
+	if err != nil {
+		a.showError(err)
+		return
+	}
+	if len(triggers) == 0 {
+		a.showModal(tr("У таблицы нет триггеров."), []string{"OK"}, nil)
+		return
+	}
+	list := tview.NewList()
+	styleList(list, colDialogBg, colDialogFg, colDialogDim)
+	list.SetBorder(false)
+	list.SetWrapAround(true)
+	for _, trg := range triggers {
+		list.AddItem(" "+trg.Name+" ", "", 0, nil)
+	}
+	drop := func() {
+		i := list.GetCurrentItem()
+		if i < 0 || i >= len(triggers) {
+			return
+		}
+		name := triggers[i].Name
+		a.closeDialog()
+		a.showModal(trf("Удалить триггер %s?", name), []string{"Удалить", "Отмена"}, func(label string) {
+			if label != "Удалить" {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			if _, err := a.current.Exec(ctx, "DROP TRIGGER "+db.QuoteIdent(name), 1); err != nil {
+				a.showError(err)
+				return
+			}
+			a.notify(tr("Триггер удалён: ") + name)
+		})
+	}
+	list.SetSelectedFunc(func(int, string, string, rune) { drop() })
+	a.showListDialog(tr("Удалить триггер"), 64, list, drop)
+}
+
+func (a *App) openSchemaOverview() {
+	if a.current == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	objs, err := a.current.Objects(ctx)
+	if err != nil {
+		a.showError(err)
+		return
+	}
+	var b strings.Builder
+	for _, o := range objs {
+		fmt.Fprintf(&b, "%s (%s)\n", o.Name, o.Type)
+		cols, err := a.current.Columns(ctx, o.Name)
+		if err == nil {
+			for _, c := range cols {
+				if c.Hidden {
+					continue
+				}
+				line := "  " + c.Name + " " + c.Type
+				if c.PK > 0 {
+					line += " PK"
+				}
+				if c.NotNull {
+					line += " NOT NULL"
+				}
+				if c.HasDef {
+					line += " DEFAULT " + c.Default
+				}
+				b.WriteString(line + "\n")
+			}
+		}
+		fks, err := a.current.ForeignKeys(ctx, o.Name)
+		if err == nil {
+			for _, fk := range fks {
+				fmt.Fprintf(&b, "  FK %s -> %s.%s\n", fk.From, fk.Table, fk.To)
+			}
+		}
+		b.WriteString("\n")
+	}
+	a.showTextDialog(tr("Схема базы: ")+a.current.Name, strings.TrimSpace(b.String()))
 }

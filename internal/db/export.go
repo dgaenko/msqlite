@@ -546,3 +546,43 @@ func WriteJSON(path string, columns []string, rows [][]any) (int64, error) {
 	}
 	return total, nil
 }
+
+// RestoreRow inserts a previously deleted row, preserving its rowid when possible.
+func (d *Database) RestoreRow(ctx context.Context, table string, cols []Column, vals []any, rowID int64) error {
+	if err := d.ensureWritable(); err != nil {
+		return err
+	}
+	if len(cols) != len(vals) {
+		return fmt.Errorf("нет колонок для вставки")
+	}
+	alias, ok, err := d.rowidAlias(ctx, table)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("таблица %s не поддерживает доступ по rowid", table)
+	}
+	ipk := false
+	for _, c := range cols {
+		if c.PK == 1 && strings.Contains(strings.ToUpper(c.Type), "INT") {
+			ipk = true
+		}
+	}
+	names := make([]string, 0, len(cols)+1)
+	args := make([]any, 0, len(cols)+1)
+	for i, c := range cols {
+		if c.Hidden {
+			continue
+		}
+		names = append(names, QuoteIdent(c.Name))
+		args = append(args, vals[i])
+	}
+	if !ipk {
+		names = append([]string{QuoteIdent(alias)}, names...)
+		args = append([]any{rowID}, args...)
+	}
+	q := "INSERT INTO " + QuoteIdent(table) + " (" + strings.Join(names, ", ") + ") VALUES (" +
+		strings.TrimSuffix(strings.Repeat("?, ", len(names)), ", ") + ")"
+	_, err = d.conn.ExecContext(ctx, q, args...)
+	return err
+}

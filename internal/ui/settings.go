@@ -17,6 +17,26 @@ type appSettings struct {
 	LastDir     string   `json:"last_dir,omitempty"`
 	NoSplash    bool     `json:"no_splash,omitempty"`
 	SQLHistory  []string `json:"sql_history,omitempty"`
+
+	FilterHistory []filterEntry `json:"filter_history,omitempty"`
+	SortHistory   []sortEntry   `json:"sort_history,omitempty"`
+	SavedQueries  []savedQuery  `json:"saved_queries,omitempty"`
+}
+
+type savedQuery struct {
+	Name string `json:"name"`
+	SQL  string `json:"sql"`
+}
+
+type filterEntry struct {
+	Table  string `json:"table"`
+	Filter string `json:"filter"`
+}
+
+type sortEntry struct {
+	Table  string `json:"table"`
+	Column string `json:"column"`
+	Desc   bool   `json:"desc"`
 }
 
 func settingsFilePath() (string, error) {
@@ -80,6 +100,10 @@ func (a *App) persistSettings() {
 		LastDir:     lastDir,
 		NoSplash:    a.opts.NoSplash,
 		SQLHistory:  history,
+
+		FilterHistory: a.filterHistory,
+		SortHistory:   a.sortHistory,
+		SavedQueries:  a.savedQueries,
 	})
 }
 
