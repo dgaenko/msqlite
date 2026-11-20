@@ -22,10 +22,11 @@ override_dh_auto_test:
 
 override_dh_auto_install:
 	install -Dm755 msqlite debian/msqlite/usr/bin/msqlite
+	install -d debian/msqlite/usr/share/doc/msqlite
 	sh scripts/collect-licenses.sh debian/third-party-licenses
 	gzip -9n -c debian/third-party-licenses >debian/msqlite/usr/share/doc/msqlite/THIRD_PARTY_LICENSES.gz
 
 override_dh_auto_clean:
-	rm -rf debian/gocache msqlite
+	rm -rf debian/gocache msqlite debian/third-party-licenses
 
 .PHONY: override_dh_auto_build override_dh_auto_test override_dh_auto_install override_dh_auto_clean
