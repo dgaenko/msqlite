@@ -8,3 +8,8 @@ bin/
 /prime/
 /.snapcraft/
 *.snap
+
+# Debian/PPA packaging
+/build/
+/vendor/
+*.deb

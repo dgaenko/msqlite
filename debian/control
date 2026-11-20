@@ -1,0 +1,21 @@
+Source: msqlite
+Section: utils
+Priority: optional
+Maintainer: Dmitry Gaenko <d.gaenko@gmail.com>
+Build-Depends: debhelper-compat (= 13), golang-any
+Standards-Version: 4.7.0
+Homepage: https://github.com/dgaenko/msqlite
+Vcs-Git: https://github.com/dgaenko/msqlite.git
+Vcs-Browser: https://github.com/dgaenko/msqlite
+Rules-Requires-Root: no
+
+Package: msqlite
+Architecture: any
+Depends: ${misc:Depends}
+Description: TUI SQLite manager in Midnight Commander / Far style
+ msqlite is a terminal user interface for browsing and editing SQLite
+ databases. It detects databases by their header, shows tables, views,
+ schemas and data, supports editing rows and running SQL queries, and can
+ import and export CSV and JSON.
+ .
+ The binary is static and has no runtime dependencies.

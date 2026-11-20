@@ -7,7 +7,7 @@ COMMIT     := $(shell $(VERSION_SH) commit)
 BUILD_DATE := $(shell $(VERSION_SH) date)
 LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)
 
-.PHONY: all build build-amd64 build-arm64 build-armv7 pi pi32 dist publish release ship test vet clean install uninstall version
+.PHONY: all build build-amd64 build-arm64 build-armv7 pi pi32 dist publish release ship test vet clean install uninstall version deb deb-amd64 deb-arm64 deb-armv7 ppa-source
 
 all: build
 
@@ -40,6 +40,20 @@ release: dist
 ship:
 	./scripts/ship.sh
 
+deb: deb-amd64 deb-arm64 deb-armv7
+
+deb-amd64:
+	./scripts/build-deb.sh amd64
+
+deb-arm64:
+	./scripts/build-deb.sh arm64
+
+deb-armv7:
+	./scripts/build-deb.sh armv7
+
+ppa-source:
+	./scripts/build-ppa-source.sh
+
 test:
 	go test ./...
 
@@ -56,4 +70,4 @@ version:
 	@$(VERSION_SH) full
 
 clean:
-	rm -rf bin
+	rm -rf bin build vendor

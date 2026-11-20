@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export CGO_ENABLED = 0
+export GOTOOLCHAIN = local
+export GOFLAGS = -mod=vendor
+export GOCACHE = $(CURDIR)/debian/gocache
+
+# Версия upstream без Debian-ревизии: 1.0.0-1~noble1 -> 1.0.0
+UPSTREAM_VERSION = $(shell dpkg-parsechangelog -SVersion | sed 's/-[^-]*$$//')
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	go build -buildvcs=false -trimpath \
+		-ldflags "-s -w -X main.version=$(UPSTREAM_VERSION) -X main.commit=unknown -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" \
+		-o msqlite .
+
+override_dh_auto_test:
+	go test ./...
+
+override_dh_auto_install:
+	install -Dm755 msqlite debian/msqlite/usr/bin/msqlite
+	sh scripts/collect-licenses.sh debian/third-party-licenses
+	gzip -9n -c debian/third-party-licenses >debian/msqlite/usr/share/doc/msqlite/THIRD_PARTY_LICENSES.gz
+
+override_dh_auto_clean:
+	rm -rf debian/gocache msqlite
+
+.PHONY: override_dh_auto_build override_dh_auto_test override_dh_auto_install override_dh_auto_clean
