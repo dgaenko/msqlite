@@ -374,6 +374,7 @@ internal/ui/theme.go         цвета и стили
 internal/ui/helpers_test.go  тесты чистых UI-хелперов
 scripts/version.sh           вычисление версии (Git или хэш исходников)
 VERSION                      базовая версия
+LICENSE                      лицензия MIT
 install.sh                   установщик с автоопределением платформы
 Makefile                     сборка, версия и установка
 ```
@@ -393,6 +394,12 @@ go vet ./...
 - Разработчик: DeepSeek
 
 Базовая версия: 1.0.0 (автоматическая — см. `msqlite -version`)
+
+## Лицензия
+
+MIT. Код можно свободно использовать, изменять и распространять, в том числе
+коммерчески, при сохранении уведомления об авторских правах и текста лицензии.
+Подробнее — [LICENSE](LICENSE).
 
 ---
 
@@ -766,6 +773,7 @@ internal/ui/theme.go         colors and styles
 internal/ui/helpers_test.go  pure UI helper tests
 scripts/version.sh           version computation (Git or source hash)
 VERSION                      base version
+LICENSE                      MIT license
 install.sh                   installer with platform autodetection
 Makefile                     build, version and installation
 ```
@@ -785,3 +793,9 @@ go vet ./...
 - Developer: DeepSeek
 
 Base version: 1.0.0 (automatic — see `msqlite -version`)
+
+## License
+
+MIT. You may use, modify and distribute the code freely, including
+commercially, provided the copyright notice and license text are preserved.
+See [LICENSE](LICENSE) for details.
