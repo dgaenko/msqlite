@@ -100,7 +100,12 @@ type App struct {
 // Run starts the TUI. It blocks until the application exits.
 func Run(opts Options) error {
 	settings := loadSettings()
-	setActiveLang(settings.Language)
+	langExplicit = false
+	if settings.Language != "" && setActiveLang(settings.Language) {
+		langExplicit = true
+	} else {
+		setActiveLang(detectSystemLanguage())
+	}
 	if !setActiveTheme(settings.Theme) {
 		setActiveTheme(defaultTheme)
 	}

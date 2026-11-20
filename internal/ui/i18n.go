@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -12,6 +13,10 @@ const (
 )
 
 var activeLang = langRU
+
+// langExplicit is true when the language was chosen by the user or loaded
+// from settings; otherwise it is detected from the system locale.
+var langExplicit bool
 
 func setActiveLang(code string) bool {
 	switch code {
@@ -480,4 +485,44 @@ var enText = map[string]string{
 	"помощь": "help",
 	" Клавиши и возможности ": " Keys and features ",
 	"Разработчик":             "Developer",
+}
+
+// detectSystemLanguage returns ru for a Russian locale and en otherwise.
+func detectSystemLanguage() string {
+	for _, key := range []string{"LC_ALL", "LC_MESSAGES", "LANG"} {
+		v := strings.TrimSpace(os.Getenv(key))
+		if v == "" {
+			continue
+		}
+		if localeIsRussian(v) {
+			return langRU
+		}
+		return langEN
+	}
+	if localeIsRussian(os.Getenv("LANGUAGE")) {
+		return langRU
+	}
+	return langEN
+}
+
+func localeIsRussian(v string) bool {
+	v = strings.ToLower(strings.TrimSpace(v))
+	if v == "" {
+		return false
+	}
+	if i := strings.IndexByte(v, ':'); i >= 0 {
+		for _, part := range strings.Split(v, ":") {
+			if localeIsRussian(part) {
+				return true
+			}
+		}
+		return false
+	}
+	if i := strings.IndexByte(v, '.'); i >= 0 {
+		v = v[:i]
+	}
+	if i := strings.IndexByte(v, '@'); i >= 0 {
+		v = v[:i]
+	}
+	return v == "ru" || strings.HasPrefix(v, "ru_") || strings.HasPrefix(v, "ru-")
 }

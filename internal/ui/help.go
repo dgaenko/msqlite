@@ -103,6 +103,8 @@ const helpTextRU = `[yellow::b]Запуск[-:-:-]
     объектов с ключами-именами колонок.
   • Generated-колонки доступны только для чтения и не попадают в форму
     вставки. В режиме записи включена проверка внешних ключей SQLite.
+  • Если язык ещё не выбран в меню, он определяется по системной локали:
+    ru_* — русский, иначе английский.
   • При изменении файла открытой базы другим процессом список таблиц,
     данные и структура обновляются автоматически; позиция курсора,
     выбранная колонка и страница сохраняются.
@@ -209,6 +211,8 @@ const helpTextEN = `[yellow::b]Startup[-:-:-]
     objects with column-name keys.
   • Generated columns are read-only and are not included in the insert
     form. SQLite foreign key checks are enabled in write mode.
+  • If no language has been chosen in the menu yet, it is detected from the
+    system locale: ru_* — Russian, otherwise English.
   • When the open database file is changed by another process, the table
     list, data and schema are refreshed automatically; the cursor position,
     selected column and page are preserved.

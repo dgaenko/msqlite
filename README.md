@@ -33,7 +33,8 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
   DOS Navigator Blue (синяя, как в классическом DN II, с диалогами в стиле
   DN II); переключение в разделе «Интерфейс».
 - Русская и английская локализация интерфейса; язык переключается в разделе
-  «Интерфейс» и запоминается.
+  «Интерфейс» и запоминается. Если язык ещё не выбран, он определяется по
+  системной локали (`ru*` — русский, иначе английский).
 - Экспорт таблицы, текущей страницы, выбранной строки или результата SQL
   в CSV/JSON;
   импорт CSV и JSON, экспорт SQL-дампа.
@@ -286,7 +287,8 @@ msqlite -version
 `~/.config/msqlite/config.json`:
 
 - тема (`mc`/`dos`/`dos-blue`);
-- язык интерфейса (`ru`/`en`);
+- язык интерфейса (`ru`/`en`); если не выбран, определяется по системной
+  локали: `ru*` — русский, иначе английский;
 - размер страницы данных;
 - вертикальные разделители колонок таблицы;
 - режим по умолчанию (только чтение / чтение-запись);
@@ -438,7 +440,8 @@ are static and have no external dependencies.
   Blue (blue, like classic DN II, with DN II-style dialogs); switch in the
   "Interface" section.
 - Russian and English UI localization; the language is switched in the
-  "Interface" section and remembered.
+  "Interface" section and remembered. If no language has been chosen yet, it is
+  detected from the system locale (`ru*` — Russian, otherwise English).
 - Export a table, the current page, the selected row or an SQL result to
   CSV/JSON; import CSV and JSON, export an SQL dump.
 - Database backup, `VACUUM`, `ANALYZE`, integrity check.
@@ -687,7 +690,8 @@ separators; they are disabled in `F9` → "Interface" → "Column separators".
 Interface settings are saved automatically to `~/.config/msqlite/config.json`:
 
 - theme (`mc`/`dos`/`dos-blue`);
-- UI language (`ru`/`en`);
+- UI language (`ru`/`en`); if not chosen, it is detected from the system
+  locale: `ru*` — Russian, otherwise English;
 - data page size;
 - vertical table column separators;
 - default mode (read-only / read-write);

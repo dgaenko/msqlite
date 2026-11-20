@@ -33,3 +33,30 @@ func TestEnglishDictionaryNotEmpty(t *testing.T) {
 		}
 	}
 }
+
+func TestDetectSystemLanguage(t *testing.T) {
+	for _, key := range []string{"LC_ALL", "LC_MESSAGES", "LANG", "LANGUAGE"} {
+		t.Setenv(key, "")
+	}
+
+	t.Setenv("LANG", "ru_RU.UTF-8")
+	if got := detectSystemLanguage(); got != langRU {
+		t.Fatalf("ru locale -> %q", got)
+	}
+
+	t.Setenv("LANG", "en_US.UTF-8")
+	if got := detectSystemLanguage(); got != langEN {
+		t.Fatalf("en locale -> %q", got)
+	}
+
+	t.Setenv("LC_ALL", "ru-RU")
+	if got := detectSystemLanguage(); got != langRU {
+		t.Fatalf("LC_ALL ru -> %q", got)
+	}
+
+	t.Setenv("LC_ALL", "C")
+	t.Setenv("LANG", "ru_RU.UTF-8")
+	if got := detectSystemLanguage(); got != langEN {
+		t.Fatalf("LC_ALL=C overrides LANG -> %q", got)
+	}
+}

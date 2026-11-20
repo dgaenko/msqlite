@@ -72,7 +72,7 @@ func (a *App) persistSettings() {
 	}
 	saveSettings(appSettings{
 		Theme:       activeTheme,
-		Language:    activeLang,
+		Language:    persistedLanguage(),
 		PageSize:    a.opts.PageSize,
 		ReadOnly:    &readOnly,
 		ColumnLines: &columnLines,
@@ -81,4 +81,11 @@ func (a *App) persistSettings() {
 		NoSplash:    a.opts.NoSplash,
 		SQLHistory:  history,
 	})
+}
+
+func persistedLanguage() string {
+	if !langExplicit {
+		return ""
+	}
+	return activeLang
 }

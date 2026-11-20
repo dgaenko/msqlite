@@ -164,6 +164,7 @@ func (a *App) setLanguage(code string) {
 	if !setActiveLang(code) {
 		return
 	}
+	langExplicit = true
 	a.persistSettings()
 	a.relocalize()
 	a.notify(trf("Язык интерфейса: %s", languageName(code)))
