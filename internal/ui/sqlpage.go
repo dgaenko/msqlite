@@ -24,7 +24,7 @@ type SQLPage struct {
 	header         *tview.TextView
 	table          *tview.Table
 	status         *tview.TextView
-	input          *tview.TextArea
+	input          *sqlInput
 	hints          *hintView
 	historyIdx     int
 	focusGrid      bool
@@ -76,7 +76,7 @@ func (p *SQLPage) build() {
 	p.status.SetTextColor(colDim)
 	p.status.SetText("[silver]" + tr("Введите SQL и нажмите Enter.") + "[-:-:-]")
 
-	p.input = tview.NewTextArea()
+	p.input = newSQLInput()
 	p.input.SetLabel("SQL> ")
 	p.input.SetLabelStyle(tcell.StyleDefault.Foreground(colTitle).Background(colFieldBg))
 	p.input.SetBackgroundColor(colFieldBg)
@@ -549,7 +549,7 @@ func completionContext(text string, wordStart int) string {
 
 func (p *SQLPage) completionAvailable() bool {
 	text := p.input.GetText()
-	cursor := textAreaCursorIndex(p.input)
+	cursor := textAreaCursorIndex(p.input.TextArea)
 	if p.compActive && p.compText == text && cursor == p.compEnd && len(p.compCands) > 0 {
 		return true
 	}
@@ -562,7 +562,7 @@ func (p *SQLPage) completionAvailable() bool {
 
 func (p *SQLPage) complete() {
 	text := p.input.GetText()
-	cursor := textAreaCursorIndex(p.input)
+	cursor := textAreaCursorIndex(p.input.TextArea)
 	if p.compActive && p.compText == text && cursor == p.compEnd && len(p.compCands) > 0 {
 		next := (p.compIndex + 1) % len(p.compCands)
 		candidate := p.compCands[next]

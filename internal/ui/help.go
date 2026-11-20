@@ -61,6 +61,7 @@ const helpTextRU = `[yellow::b]Запуск[-:-:-]
   [white]F2[-:-:-]            полное значение выбранной ячейки
   [white]Esc[-:-:-]            отменить выполняющийся запрос
   Выполняется одна инструкция за раз; SELECT показывает не более 1000 строк.
+  Ключевые слова, строки, числа и комментарии подсвечиваются.
   Результат показывает вертикальные линии колонок (отключаются в «Интерфейсе»).
 
 [yellow::b]Верхнее меню (F9) и палитра (Ctrl+P)[-:-:-]
@@ -169,6 +170,7 @@ const helpTextEN = `[yellow::b]Startup[-:-:-]
   [white]F2[-:-:-]            full value of the selected cell
   [white]Esc[-:-:-]           cancel the running query
   One statement is executed at a time; SELECT shows at most 1000 rows.
+  Keywords, strings, numbers and comments are highlighted.
   The result shows vertical column lines (disabled in "Interface").
 
 [yellow::b]Top menu (F9) and palette (Ctrl+P)[-:-:-]

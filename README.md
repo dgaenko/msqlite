@@ -26,8 +26,8 @@ TUI-менеджер SQLite в стиле Midnight Commander / Far Manager. По
   данные и структура перечитываются с сохранением курсора и страницы.
 - Редактирование ячеек, вставка и удаление строк (для обычных rowid-таблиц).
 - Многострочная SQL-консоль с сохраняемой историей запросов, автодополнением
-  (`Tab`/`Ctrl+Space`), конструктором запросов (`F6`), табличным результатом
-  и отменой долгого запроса по `Esc`.
+  (`Tab`/`Ctrl+Space`), подсветкой синтаксиса, конструктором запросов (`F6`),
+  табличным результатом и отменой долгого запроса по `Esc`.
 - Верхнее меню действий (`F9`) и быстрая палитра (`Ctrl+P`).
 - Три темы интерфейса: Midnight Commander, DOS Navigator (серая) и
   DOS Navigator Blue (синяя, как в классическом DN II, с диалогами в стиле
@@ -340,8 +340,7 @@ msqlite -version
 - Редактор структуры поддерживает переименование таблицы и колонок,
   добавление/удаление колонок; изменение типа/ограничений — через SQL-консоль,
   индексы создаются и удаляются из меню «Данные».
-- Нет подсветки синтаксиса SQL, одновременной работы с несколькими базами
-  и поддержки SQLCipher.
+- Нет одновременной работы с несколькими базами и поддержки SQLCipher.
 - Одновременная работа с базой из другого процесса может привести к блокировке;
   в приложении используется таймаут ожидания.
 
@@ -433,8 +432,8 @@ are static and have no external dependencies.
   list, data and schema are reloaded while preserving the cursor and page.
 - Cell editing, row insert and delete (for regular rowid tables).
 - Multi-line SQL console with persistent query history, autocomplete
-  (`Tab`/`Ctrl+Space`), a query builder (`F6`), tabular results and cancellation
-  of long queries with `Esc`.
+  (`Tab`/`Ctrl+Space`), syntax highlighting, a query builder (`F6`), tabular
+  results and cancellation of long queries with `Esc`.
 - Top action menu (`F9`) and quick palette (`Ctrl+P`).
 - Three UI themes: Midnight Commander, DOS Navigator (gray) and DOS Navigator
   Blue (blue, like classic DN II, with DN II-style dialogs); switch in the
@@ -741,8 +740,7 @@ BLOB.
 - The schema editor supports renaming the table and columns and adding/dropping
   columns; changing types/constraints is done through the SQL console; indexes
   are created and dropped from the "Data" menu.
-- No SQL syntax highlighting, no simultaneous work with multiple databases and
-  no SQLCipher support.
+- No simultaneous work with multiple databases and no SQLCipher support.
 - Concurrent access from another process may cause a lock; the application uses
   a wait timeout.
 
