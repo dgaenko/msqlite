@@ -458,22 +458,22 @@ are static and have no external dependencies.
 ### Main screen and data
 
 <p align="center">
-  <img src="docs/screenshots/02-main.png" width="49%" alt="Main screen: databases, folders and tables">
-  <img src="docs/screenshots/03-data.png" width="49%" alt="Data browsing and editing">
+  <img src="docs/screenshots/en/02-main.png" width="49%" alt="Main screen: databases, folders and tables">
+  <img src="docs/screenshots/en/03-data.png" width="49%" alt="Data browsing and editing">
 </p>
 
 ### Schema and SQL console
 
 <p align="center">
-  <img src="docs/screenshots/04-structure.png" width="49%" alt="Table schema: columns, indexes, DDL">
-  <img src="docs/screenshots/05-sql.png" width="49%" alt="SQL console with query results">
+  <img src="docs/screenshots/en/04-structure.png" width="49%" alt="Table schema: columns, indexes, DDL">
+  <img src="docs/screenshots/en/05-sql.png" width="49%" alt="SQL console with query results">
 </p>
 
 ### Top menu and splash
 
 <p align="center">
-  <img src="docs/screenshots/06-menu.png" width="49%" alt="Top menu: Help section and About item">
-  <img src="docs/screenshots/01-splash.png" width="49%" alt="Splash screen">
+  <img src="docs/screenshots/en/06-menu.png" width="49%" alt="Top menu: Help section and About item">
+  <img src="docs/screenshots/en/01-splash.png" width="49%" alt="Splash screen">
 </p>
 
 ## Requirements
