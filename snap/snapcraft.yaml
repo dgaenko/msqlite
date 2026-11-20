@@ -20,6 +20,10 @@ description: |
   Works on Linux (amd64, arm64, armv7), including Raspberry Pi.
   Binaries are static and have no external dependencies.
 
+  The snap is strictly confined: it can open databases under your home
+  directory and on removable media. For databases in /srv, /var/www, /opt or
+  other system paths, use the .deb, install.sh or the GitHub release binaries.
+
   Upstream: https://github.com/dgaenko/msqlite
 adopt-info: msqlite
 license: MIT
@@ -31,13 +35,12 @@ website: https://github.com/dgaenko/msqlite
 base: core22
 grade: stable
 
-# msqlite — файловый менеджер баз SQLite: он ходит по произвольным каталогам
-# (вплоть до /), открывает и изменяет файлы баз в любом месте файловой
-# системы и хранит настройки в ~/.config/msqlite. Строгое ограничение (strict)
-# не даёт такого доступа, поэтому используется classic confinement, как у
-# аналогичных TUI-менеджеров (mc, ranger). Публикация classic-снапов требует
-# отдельного ревью в Snap Store (см. https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/).
-confinement: classic
+# Снап строго изолирован. Доступны домашний каталог и съёмные носители;
+# настройки и история SQL перенаправляются в $SNAP_USER_DATA обёрткой
+# snap/local/run-msqlite, потому что ~/.config недоступен под strict.
+# Для доступа к базам в /srv, /var/www, /opt и т.п. используйте .deb,
+# install.sh или бинарники из GitHub-релизов.
+confinement: strict
 
 architectures:
   - build-on: amd64
@@ -49,7 +52,10 @@ architectures:
 
 apps:
   msqlite:
-    command: bin/msqlite
+    command: bin/run-msqlite
+    plugs:
+      - home
+      - removable-media
 
 parts:
   msqlite:
@@ -76,6 +82,8 @@ parts:
       go build -buildvcs=false -trimpath \
         -ldflags "-s -w -X main.version=$VERSION -X main.commit=$COMMIT -X main.buildDate=$BUILD_DATE" \
         -o "$CRAFT_PART_INSTALL/bin/msqlite" .
+
+      install -Dm755 snap/local/run-msqlite "$CRAFT_PART_INSTALL/bin/run-msqlite"
 
       # Версия снапа берётся из scripts/version.sh (VERSION + git-состояние).
       # Snap Store принимает версию не длиннее 32 символов, поэтому
